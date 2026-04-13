@@ -28,7 +28,7 @@ CFLAGS  := -Wall -Wextra -ffreestanding -fno-builtin -fno-stack-protector -fno-p
 ASFLAGS := -g
 LDFLAGS := -T linker.ld -Map $(MAP)
 
-.PHONY: all clean disasm firmware bootfs usb-image
+.PHONY: all clean disasm firmware bootfs usb-image flash-usb
 
 all: $(IMG) $(LISTING)
 
@@ -54,3 +54,6 @@ disasm: $(LISTING)
 
 clean:
 	rm -rf $(BUILD_DIR)
+
+flash-usb: $(IMG)
+	./scripts/flash_rpi5_usb.sh --kernel $(IMG) --device $(DEVICE)
