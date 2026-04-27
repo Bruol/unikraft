@@ -53,3 +53,11 @@ then run in gdb
 set $x0 = 0 
 continue
 ```
+
+
+## Resources:
+
+- https://macoy.me/blog/programming/RaspberryPi5Debugging
+- https://github.com/rsta2/circle
+- https://github.com/Utsav-Agarwal/HobOS/
+- https://main.lv/writeup/raspberry5_baremetal_uart.md

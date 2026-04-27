@@ -13,7 +13,9 @@ ELF      := $(BUILD_DIR)/kernel.elf
 IMG      := $(BUILD_DIR)/kernel_2712.img
 MAP      := $(BUILD_DIR)/kernel.map
 LISTING  := $(BUILD_DIR)/kernel.lst
-OBJECTS  := $(BUILD_DIR)/start.o $(BUILD_DIR)/kernel.o
+SRCS     := $(shell find src -type f \( -name '*.c' -o -name '*.S' \) | sort)
+OBJECTS  := $(patsubst src/%,$(BUILD_DIR)/%.o,$(SRCS))
+DEPS     := $(OBJECTS:.o=.d)
 FIRMWARE_BASE_URL := https://raw.githubusercontent.com/raspberrypi/firmware/$(FIRMWARE_VERSION)/boot
 BOOT_STAGING := $(BUILD_DIR)/bootfs
 FIRMWARE_DIR := $(BUILD_DIR)/firmware
@@ -24,8 +26,8 @@ BOOT_IMAGE_SIZE_MB ?= 64
 CONFIG_TXT := $(BOOT_STAGING)/config.txt
 BOOT_FILES := $(FIRMWARE_DIR)/start4.elf $(FIRMWARE_DIR)/fixup4.dat $(FIRMWARE_DIR)/bcm2712-rpi-5-b.dtb
 
-CFLAGS  := -Wall -Wextra -ffreestanding -fno-builtin -fno-stack-protector -fno-pic -mgeneral-regs-only -O0 -g
-ASFLAGS := -g
+CFLAGS  := -Wall -Wextra -ffreestanding -fno-builtin -fno-stack-protector -fno-pic -mgeneral-regs-only -O0 -g -MMD -MP
+ASFLAGS := -g -MMD -MP
 LDFLAGS := -T linker.ld -Map $(MAP)
 
 .PHONY: all clean disasm firmware bootfs usb-image flash-usb
@@ -35,10 +37,12 @@ all: $(IMG) $(LISTING)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/start.o: src/start.S | $(BUILD_DIR)
+$(BUILD_DIR)/%.S.o: src/%.S | $(BUILD_DIR)
+	mkdir -p $(dir $@)
 	$(AS) $(ASFLAGS) -c -o $@ $<
 
-$(BUILD_DIR)/kernel.o: src/kernel.c | $(BUILD_DIR)
+$(BUILD_DIR)/%.c.o: src/%.c | $(BUILD_DIR)
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(ELF): $(OBJECTS) linker.ld
@@ -57,3 +61,5 @@ clean:
 
 flash-usb: $(IMG)
 	./scripts/flash_rpi5_usb.sh --kernel $(IMG) --device $(DEVICE)
+
+-include $(DEPS)
