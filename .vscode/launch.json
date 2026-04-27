@@ -1,0 +1,84 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Raspberry Pi 5: load kernel",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/kernel.elf",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "miDebuggerPath": "${config:rpi5.gdbPath}",
+      "miDebuggerServerAddress": "localhost:3333",
+      "preLaunchTask": "build kernel",
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "setupCommands": [
+        {
+          "text": "set confirm off"
+        },
+        {
+          "text": "file ${workspaceFolder}/build/kernel.elf"
+        },
+        {
+          "text": "load"
+        },
+        {
+          "text": "tbreak src/start.S:19"
+        },
+        {
+          "text": "continue"
+        },
+        {
+          "text": "set $x0 = 0"
+        },
+        {
+          "text": "break kernel_main"
+        }
+      ]
+    },
+    {
+      "name": "Raspberry Pi 5: start OpenOCD and load kernel",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/kernel.elf",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "miDebuggerPath": "${config:rpi5.gdbPath}",
+      "debugServerPath": "openocd",
+      "debugServerArgs": "-f debug_cfg/cmsis-dap.cfg -f debug_cfg/openocd_raspi5.cfg",
+      "serverStarted": "Listening on port 3333 for gdb connections",
+      "filterStderr": true,
+      "filterStdout": true,
+      "preLaunchTask": "build kernel",
+      "stopAtEntry": false,
+      "externalConsole": false,
+      "setupCommands": [
+        {
+          "text": "set confirm off"
+        },
+        {
+          "text": "file ${workspaceFolder}/build/kernel.elf"
+        },
+        {
+          "text": "target extended-remote localhost:3333"
+        },
+        {
+          "text": "load"
+        },
+        {
+          "text": "tbreak src/start.S:19"
+        },
+        {
+          "text": "continue"
+        },
+        {
+          "text": "set $x0 = 0"
+        },
+        {
+          "text": "break kernel_main"
+        }
+      ]
+    }
+  ]
+}

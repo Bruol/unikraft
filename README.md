@@ -2,6 +2,12 @@
 
 This repo is intended to add rapberry pi 5 platform support to the [unikraft project](https://github.com/unikraft/unikraft)
 
+## Things to write a tutorial about:
+
+- connecting both uart and swd at the same time
+- updating firmware over swd/openocd
+
+
 
 ## Flashing:
 
@@ -39,4 +45,11 @@ to connect gdb run:
 
 ```bash
 gdb --command=debug_cfg/ConnectJTAG.gdb build/kernel.elf
+```
+
+then run in gdb
+
+```gdb
+set $x0 = 0 
+continue
 ```

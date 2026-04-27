@@ -160,7 +160,7 @@ arm_64bit=1
 kernel=kernel_2712.img
 device_tree=bcm2712-rpi-5-b.dtb
 enable_jtag_gpio=1
-usb_max_current_enable=1
+enable_rp1_uart=1
 
 EOF
 }
