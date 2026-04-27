@@ -11,6 +11,7 @@ STAGING_ROOT="${REPO_ROOT}/build/rpi5_usb"
 BOOT_DIR="${STAGING_ROOT}/bootfs"
 VOLUME_LABEL=${VOLUME_LABEL:-RPI5BOOT}
 KERNEL_DEST_NAME="kernel_2712.img"
+CONFIG_SOURCE="${REPO_ROOT}/config.txt"
 
 DEVICE=""
 KERNEL_PATH=""
@@ -154,15 +155,8 @@ stage_kernel() {
 }
 
 write_config() {
-    cat > "${BOOT_DIR}/config.txt" <<'EOF'
-# Raspberry Pi 5 requires a non-empty config.txt on the boot partition.
-arm_64bit=1
-kernel=kernel_2712.img
-device_tree=bcm2712-rpi-5-b.dtb
-enable_jtag_gpio=1
-enable_rp1_uart=1
-
-EOF
+    [ -f "${CONFIG_SOURCE}" ] || die "config.txt source file not found: ${CONFIG_SOURCE}"
+    cp "${CONFIG_SOURCE}" "${BOOT_DIR}/config.txt"
 }
 
 darwin_partition() {
