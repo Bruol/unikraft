@@ -1,4 +1,5 @@
 #include "pl011.h"
+#include "bruol.h"
 
 static inline void cpu_wait_forever(void)
 {
@@ -49,7 +50,7 @@ static void uart_reply_loop(void)
     char input[128];
     uint16_t len = 0;
 
-    pl011_puts("UART reply loop ready\r\n> ");
+    pl011_puts(BRUOL_BANNER);
     for (;;)
     {
         if (!pl011_rx_ready())
