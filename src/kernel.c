@@ -44,28 +44,53 @@ int get_raspi_board()
     return ret;
 }
 
-void kernel_main(void)
+static void uart_reply_loop(void)
 {
-    volatile unsigned long boot_marker = 0x12345678UL;
-    (void)boot_marker;
+    char input[128];
+    uint16_t len = 0;
 
-    pl011_init();
-    pl011_puts("Raspberry Pi5 UART demo?!\r\n");
-    while (1)
+    pl011_puts("UART reply loop ready\r\n> ");
+    for (;;)
     {
-        uint32_t rx_status = pl011_read32(PL011_FR);
-        // empty? if not printout
-        if (!(rx_status & PL011_FR_RXFE))
+        if (!pl011_rx_ready())
         {
-            uint8_t c = pl011_read8(PL011_DR);
-            if (c == 0xD)
+            continue;
+        }
+
+        uint8_t c = pl011_getc();
+
+        if (c == '\r' || c == '\n')
+        {
+            input[len] = '\0';
+
+            pl011_puts("\r\nYou said: ");
+            pl011_puts(input);
+            pl011_puts("\r\n> ");
+
+            len = 0;
+        }
+        else if (c == '\b' || c == 0x7f)
+        {
+            if (len > 0)
             {
-                pl011_puts("\r\n");
+                len--;
+                pl011_puts("\b \b");
             }
-            else
+        }
+        else
+        {
+            if (len < sizeof(input) - 1)
             {
-                pl011_write8(PL011_DR, c);
+                input[len++] = (char)c;
+                pl011_putc(c);
             }
         }
     }
+}
+
+void kernel_main(void)
+{
+
+    pl011_init();
+    uart_reply_loop();
 }

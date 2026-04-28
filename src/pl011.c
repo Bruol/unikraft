@@ -35,7 +35,16 @@ void pl011_puts(const char *str)
         cnt++;
     }
 }
+
+int pl011_rx_ready()
+{
+    return !(pl011_read32(PL011_FR) & PL011_FR_RXFE);
+}
+
 uint8_t pl011_getc()
 {
-    return pl011_read8(PL011_DR);
+    while (!pl011_rx_ready())
+        ;
+
+    return (uint8_t)(pl011_read32(PL011_DR) & 0xff);
 }

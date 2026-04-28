@@ -8,7 +8,7 @@ typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 
 // static for now for raspi5
-#define MMIO_BASE 0x1F00000000UL
+#define MMIO_BASE 0x1c00000000UL
 #define PL011_REG_OFFSET MMIO_BASE + 0x30000
 
 #define PL011_DR 0x00 /* Data read or written from the interface. */
@@ -47,5 +47,6 @@ typedef unsigned int uint32_t;
 void pl011_init();
 void pl011_putc(const uint8_t c);
 void pl011_puts(const char *str);
+int pl011_rx_ready();
 uint8_t pl011_getc();
 #endif
