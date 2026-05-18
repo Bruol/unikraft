@@ -6,6 +6,7 @@
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
+typedef unsigned long uint64_t;
 
 // static for now for raspi5
 #define MMIO_BASE 0x1c00000000UL

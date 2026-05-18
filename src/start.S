@@ -4,6 +4,8 @@
 .type _start, %function
 
 _start:
+    mov x19, x0
+
     mrs x1, mpidr_el1
     and x1, x1, #3
     cbz x1, 1f
@@ -13,16 +15,17 @@ secondary_core_hold:
     b secondary_core_hold
 
 1:
-    // Early debug stop: attach GDB, then `set $x0 = 0` to continue.
-    ldr x0, =1
+    // Early debug stop: attach GDB, then `set $x2 = 0` to continue.
+    ldr x2, =1
 2:
     nop
-    cbnz x0, 2b
+    cbnz x2, 2b
 
     ldr x1, =__stack_top
     mov sp, x1
 
     bl clear_bss
+    mov x0, x19
     bl kernel_main
 
 halt:

@@ -1,13 +1,6 @@
 #include "pl011.h"
 #include "bruol.h"
-
-static inline void cpu_wait_forever(void)
-{
-    for (;;)
-    {
-        __asm__ volatile("wfe");
-    }
-}
+#include "dtb.h"
 
 // TODO: remove -- we dont need this as this is only for rpi5 but I though it was cool :)
 int get_raspi_board()
@@ -89,9 +82,10 @@ static void uart_reply_loop(void)
     }
 }
 
-void kernel_main(void)
+void kernel_main(uint64_t boot_x0)
 {
 
     pl011_init();
+    dtb_print_from_addr(boot_x0);
     uart_reply_loop();
 }

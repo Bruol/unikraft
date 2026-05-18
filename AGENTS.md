@@ -19,3 +19,5 @@ observe raspi usart using note the device name may be different on your system, 
 ```bash
 tio /dev/cu.usbmodem102 -b 115200         
 ```
+
+never use unsafe c functions that could cause buffer overflows, use safer alternatives like `strncpy` or `snprintf` instead. Always validate user input to prevent security vulnerabilities.
