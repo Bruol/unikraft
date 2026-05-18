@@ -21,3 +21,6 @@ tio /dev/cu.usbmodem102 -b 115200
 ```
 
 never use unsafe c functions that could cause buffer overflows, use safer alternatives like `strncpy` or `snprintf` instead. Always validate user input to prevent security vulnerabilities.
+
+## Journal
+after every run, you must append to the JOURNAL.md file what you did. Append the least amount of information that one would need to reproduce the same results.
