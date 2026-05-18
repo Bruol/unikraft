@@ -55,6 +55,12 @@ continue
 ```
 
 
+## uart:
+observe raspi usart using note the device name may be different on your system, check with `ls /dev/cu.*` and look for something like `cu.usbmodem102` or `cu.usbserial-0001`
+
+```bash
+tio /dev/cu.usbmodem102 -b 115200         
+```
 ## Resources:
 
 - https://macoy.me/blog/programming/RaspberryPi5Debugging
