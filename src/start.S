@@ -7,7 +7,7 @@ _start:
     mov x19, x0
 
     mrs x1, mpidr_el1
-    and x1, x1, #3
+    and x1, x1, 
     cbz x1, 1f
 
 secondary_core_hold:
@@ -36,11 +36,11 @@ halt:
 clear_bss:
     ldr x1, =__bss_start
     ldr x2, =__bss_end
-    mov x3, #0
+    mov x3, 
 3:
     cmp x1, x2
     b.hs 4f
-    str x3, [x1], #8
+    str x3, [x1], 
     b 3b
 4:
     ret

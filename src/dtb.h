@@ -1,8 +1,21 @@
-#ifndef __DTB_H
-#define __DTB_H
 
+
+typedef unsigned int uint32_t;
 typedef unsigned long uint64_t;
 
-void dtb_print_from_addr(uint64_t dtb_addr);
+struct ukplat_bootinfo
+{
+    uint64_t dtb;
+    uint32_t dtb_size;
+    uint64_t mem_base;
+    uint64_t mem_size;
+    uint64_t cmdline;
+    uint32_t cmdline_len;
+    uint64_t initrd_start;
+    uint64_t initrd_end;
+};
 
-#endif
+int ukplat_bootinfo_fdt_setup(uint64_t dtb_addr);
+struct ukplat_bootinfo *ukplat_bootinfo_get(void);
+
+void rpi5_ukplat_entry(uint64_t dtb_addr);
