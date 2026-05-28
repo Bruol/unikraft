@@ -46,8 +46,8 @@ bootstack_top:
 
 .text
 ENTRY(_librpi5plat_entry)
-	mov	x20, x0 # preserve dtb addr
-	# drop to EL1 if in EL2 otherwise branch to 5
+	mov	x20, x0 // preserve dtb addr
+	// Drop to EL1 if in EL2 otherwise branch to 5.
 	mrs	x1, CurrentEL
 	cmp	x1, #0x8
 	b.ne	5f
@@ -65,12 +65,12 @@ ENTRY(_librpi5plat_entry)
 	eret
 
 5:
-	# load vector table in exceptions.S
+	// Load vector table in exceptions.S.
 	ldr	x1, =vector_table
 	msr	VBAR_EL1, x1
 	isb
 
-	# disable other coress
+	// Disable other cores.
 	mrs	x1, mpidr_el1
 	and	x1, x1, #0xff
 	cbz	x1, 1f
@@ -81,7 +81,7 @@ ENTRY(_librpi5plat_entry)
 
 
 
-	# Early debug stop: attach GDB, then clear x2 or rpi5_gdb_spin_flag
+	// Early debug stop: attach GDB, then clear x2 or rpi5_gdb_spin_flag.
 	ldr	x3, =rpi5_gdb_spin_flag
 4:
 	ldr	x2, [x3]
@@ -101,7 +101,7 @@ ENTRY(_librpi5plat_entry)
 	str	x3, [x1], #8
 	b	2b
 3:
-	# print some debug info
+	// Print early debug info.
 	bl	rpi5_pl011_init
 	ldr	x0, =rpi5_msg_entry
 	bl	rpi5_pl011_puts
@@ -128,7 +128,7 @@ ENTRY(_librpi5plat_entry)
 	ldr	x1, =_uk_pcpuvar_base
 	msr	tpidr_el1, x1
 
-	# setup fdt for bootinfo and enter unikraft
+	// Set up FDT bootinfo and enter Unikraft.
 	ldr	x0, =rpi5_msg_fdt
 	bl	rpi5_pl011_puts
 	mov	x0, x20
