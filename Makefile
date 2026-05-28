@@ -1,6 +1,14 @@
 TARGET_TRIPLE ?= aarch64-none-elf
 CROSS_COMPILE ?= aarch64-elf-
 FIRMWARE_VERSION ?= master
+UK_BASE ?= $(abspath ../unikraft)
+UK_MAKE ?= gmake
+UK_APP := $(abspath app)
+UK_PLAT := $(abspath .)
+UK_BUILD_DIR := $(abspath build/unikraft)
+UK_CONFIG := $(UK_APP)/.config
+UK_DEFCONFIG := $(abspath configs/rpi5_defconfig)
+UK_MAKE_ARGS := -C $(UK_BASE) A=$(UK_APP) P=$(UK_PLAT) O=$(UK_BUILD_DIR) C=$(UK_CONFIG) UK_CFLAGS=-std=gnu11
 
 CC      := clang --target=$(TARGET_TRIPLE)
 AS      := clang --target=$(TARGET_TRIPLE)
@@ -30,9 +38,20 @@ CFLAGS  := -Wall -Wextra -ffreestanding -fno-builtin -fno-stack-protector -fno-p
 ASFLAGS := -g -MMD -MP
 LDFLAGS := -T linker.ld -Map $(MAP)
 
-.PHONY: all clean disasm firmware bootfs usb-image flash-usb
+.PHONY: all baremetal unikraft-build-dir unikraft-config unikraft clean disasm firmware bootfs usb-image flash-usb flash-baremetal
 
-all: $(IMG) $(LISTING)
+all: unikraft
+
+baremetal: $(IMG) $(LISTING)
+
+unikraft-build-dir:
+	mkdir -p $(UK_BUILD_DIR)
+
+unikraft-config: unikraft-build-dir
+	$(UK_MAKE) $(UK_MAKE_ARGS) DEFCONFIG=$(UK_DEFCONFIG) defconfig
+
+unikraft: unikraft-config
+	$(UK_MAKE) $(UK_MAKE_ARGS)
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -57,9 +76,12 @@ $(LISTING): $(ELF)
 disasm: $(LISTING)
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) $(UK_CONFIG)
 
-flash-usb: $(IMG)
+flash-usb: unikraft
+	./scripts/flash_rpi5_usb.sh --kernel $(UK_BUILD_DIR)/kernel_2712.img --device $(DEVICE)
+
+flash-baremetal: $(IMG)
 	./scripts/flash_rpi5_usb.sh --kernel $(IMG) --device $(DEVICE)
 
 -include $(DEPS)
