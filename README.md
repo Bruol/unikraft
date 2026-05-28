@@ -61,7 +61,14 @@ observe raspi usart using note the device name may be different on your system, 
 ```bash
 tio /dev/cu.usbmodem102 -b 115200         
 ```
+
 ## Resources:
+
+
+
+something that works extreamly well is setting up tmux with gdb and tio side by side and then giving coding agent access to tmux session and giving it an objective. this way it can iterate, test new code by running `make` in the tmux session, and then observe the results in gdb and tio to verify if the changes had the intended effect. this works because of the ability to load new kernels using gdb's `load` command. Note you have to load the dtb into memory and set `x0` to its address before hitting the kernel entry point, otherwise the kernel will panic when it tries to parse the dtb. You can automate this in gdb with a helper script that you `source` after connecting, which sets up a breakpoint at the entry point, and then in the breakpoint handler it loads the dtb, sets `x0`, and continues.
+
+
 
 - https://macoy.me/blog/programming/RaspberryPi5Debugging
 - https://github.com/rsta2/circle
