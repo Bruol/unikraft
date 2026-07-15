@@ -3,25 +3,39 @@
 #include <uk/lcpu.h>
 #include <uk/plat/common/bootinfo.h>
 #include <uk/plat/common/memory.h>
+#include <uk/plat/memory.h>
 #include <uk/print.h>
 
 #include "pl011.h"
 
-static void rpi5_bootinfo_drop_null_free_region(struct ukplat_bootinfo *bi)
+static int rpi5_bootinfo_reserve_null_page(struct ukplat_bootinfo *bi)
 {
-	struct ukplat_memregion_desc *mrd;
-	__u32 i;
+	/*
+	 * The DTB reports RAM starting at physical address zero, so the common
+	 * FDT setup initially creates a FREE region beginning at 0x0. The common
+	 * memregion allocator returns the allocated physical address as a pointer;
+	 * allocating from 0x0 would therefore return NULL, which callers interpret
+	 * as an allocation failure even though the region was consumed.
+	 *
+	 * Reserve only the first page to remove that ambiguity while retaining the
+	 * rest of the low RAM. This descriptor initially overlaps the start of the
+	 * FREE descriptor. The common coalescer gives RESERVED regions priority and
+	 * trims the FREE descriptor from [0, ...] to [__PAGE_SIZE, ...].
+	 */
+	const struct ukplat_memregion_desc null_page = {
+		.pbase = 0,
+		.vbase = 0,
+		.len = __PAGE_SIZE,
+		.pg_count = 1,
+		.type = UKPLAT_MEMRT_RESERVED,
+	};
+	int rc;
 
-	for (i = 0; i < bi->mrds.count; i++)
-	{
-		mrd = &bi->mrds.mrds[i];
-		if (mrd->type == UKPLAT_MEMRT_FREE && mrd->vbase == 0)
-		{
-			rpi5_pl011_puts("rpi5: dropping low free memory region at 0x0\r\n");
-			ukplat_memregion_list_delete(&bi->mrds, i);
-			i--;
-		}
-	}
+	rc = ukplat_memregion_list_insert(&bi->mrds, &null_page);
+	if (rc < 0)
+		return rc;
+	ukplat_memregion_list_coalesce(&bi->mrds);
+	return 0;
 }
 
 void rpi5_ukplat_entry(void)
@@ -40,7 +54,13 @@ void rpi5_ukplat_entry(void)
 		UK_CRASH("rpi5: bootinfo missing after DTB setup\n");
 	}
 
-	rpi5_bootinfo_drop_null_free_region(bi);
+	rc = rpi5_bootinfo_reserve_null_page(bi);
+	if (rc)
+		UK_CRASH("rpi5: could not reserve the null page: %d\n", rc);
+
+	rc = ukplat_mem_init();
+	if (rc)
+		UK_CRASH("rpi5: common memory initialization failed: %d\n", rc);
 
 	rpi5_pl011_puts("rpi5: probing interrupt controller\r\n");
 	rc = uk_intctlr_probe();

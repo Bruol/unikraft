@@ -41,6 +41,7 @@
 .section .bss
 .balign 16
 .space BOOTSTACK_SIZE
+.global bootstack_top
 bootstack_top:
 
 .text
@@ -99,6 +100,8 @@ ENTRY(_librpi5plat_entry)
 
 	ldr	x1, =bootstack_top
 	mov	sp, x1
+	mov	x0, x20
+	bl	rpi5_start_mmu
 
 	ldr	x1, =__bss_start
 	ldr	x2, =_end
