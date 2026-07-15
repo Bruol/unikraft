@@ -70,6 +70,17 @@ SECTIONS {
 		*(.text.*)
 	} :text
 
+	/*
+	 * Keep the warm-reload trampoline at a build-independent identity-mapped
+	 * address.  GDB executes the copy from the previous image before replacing
+	 * it, so this address must not move when ordinary kernel text changes.
+	 */
+	. = 0x200000;
+	.rpi5_reload :
+	{
+		KEEP(*(.rpi5_reload))
+	} :text
+
 	. = ALIGN(__PAGE_SIZE);
 	_etext = .;
 
