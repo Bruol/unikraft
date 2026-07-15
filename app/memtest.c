@@ -83,6 +83,11 @@ int main(int argc, char *argv[])
 	for (i = 0; i < chunk_count; i++)
 		free(chunks[i]);
 
+	if (errors) {
+		printf("rpi5-memtest: FAILED with %lu corrupt words\n",
+		       (unsigned long)errors);
+		return 1;
+	}
 	if (allocated != TARGET_BYTES) {
 		printf("rpi5-memtest: PASS, verified all %lu allocatable MiB "
 		       "(%lu MiB physical target includes firmware/runtime "
@@ -90,11 +95,6 @@ int main(int argc, char *argv[])
 		       (unsigned long)(allocated / (1024 * 1024)),
 		       (unsigned long)(TARGET_BYTES / (1024 * 1024)));
 		return 0;
-	}
-	if (errors) {
-		printf("rpi5-memtest: FAILED with %lu corrupt words\n",
-		       (unsigned long)errors);
-		return 1;
 	}
 
 	printf("rpi5-memtest: PASS, 4 GiB verified\n");
