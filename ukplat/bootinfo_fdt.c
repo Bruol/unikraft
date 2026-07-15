@@ -91,7 +91,10 @@ static void rpi5_memory_mrds(struct ukplat_bootinfo *bi, void *fdtp)
 			if (unlikely(end < base))
 				ukplat_bootinfo_crash("Memory range overflows");
 			found = 1;
-			if (RANGE_CONTAIN(base, size, __BASE_ADDR, image_len)) {
+			if (end > __BASE_ADDR && base < __END) {
+				if (unlikely(!RANGE_CONTAIN(base, size,
+							    __BASE_ADDR, image_len)))
+					ukplat_bootinfo_crash("Memory tuple partially overlaps image");
 				image_found = 1;
 				rpi5_free_mrd(bi, base, __BASE_ADDR - base);
 				rpi5_free_mrd(bi, __END, end - __END);
