@@ -1,3 +1,5 @@
+This is a work in progress platform implementation for unikraft. Anything might be subject to change
+
 ## GDB
 to connect gdb run:
 
@@ -24,3 +26,7 @@ never use unsafe c functions that could cause buffer overflows, use safer altern
 
 ## Journal
 after every run, if you implemented a feature or changed some code, you must append to the JOURNAL.md file what you did. Append the least amount of information that one would need to reproduce the same results. Do not append if you merely answered questions about the code and did not change any files.
+
+
+# Parent Repo:
+This is a platform implementation to run unikraft on rapberry pi 5. the code for unikraft can be found at ../unikraft look at the unikraft code for reference or when the user asks questions about unikraft.
