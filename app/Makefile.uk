@@ -1,3 +1,5 @@
 $(eval $(call addlib_s,app_rpi5_hello,$(CONFIG_APP_RPI5_HELLO)))
+$(eval $(call addlib_s,app_rpi5_memtest,$(CONFIG_APP_RPI5_MEMTEST)))
 
 APP_RPI5_HELLO_SRCS-y += $(APP_RPI5_HELLO_BASE)/main.c
+APP_RPI5_MEMTEST_SRCS-y += $(APP_RPI5_MEMTEST_BASE)/memtest.c

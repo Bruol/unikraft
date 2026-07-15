@@ -397,9 +397,7 @@ ENTRY(rpi5_mmu_parse_fdt)
 9:	/* FDT_END is valid only after every opened node has been closed. */
 	cmp	w25, #0
 	b.ne	rpi5_mmu_bad_struct
-	ldr	x0, =rpi5_mmu_range_count
-	ldr	x0, [x0]
-	cbz	x0, rpi5_mmu_no_memory
+	bl	rpi5_mmu_build_ranges
 	mov	x30, x21
 	ret
 END(rpi5_mmu_parse_fdt)
@@ -462,25 +460,49 @@ rpi5_mmu_add_reg:
 	add	x7, x7, #1
 	cmp	x7, x8
 	b.lo	53b
-	ldr	x9, =rpi5_mmu_range_count
-	ldr	x10, [x9]
-	cmp	x10, #MAX_RAM_RANGES
-	b.hs	rpi5_mmu_too_many_ranges
-	/* Export each rounded [base, length] pair for GDB and later diagnostics. */
-	ldr	x11, =rpi5_mmu_ranges
-	lsl	x12, x10, #4
-	add	x11, x11, x12
-	lsr	x7, x4, #30
-	lsl	x7, x7, #30
-	lsl	x8, x8, #30
-	str	x7, [x11]
-	sub	x8, x8, x7
-	str	x8, [x11, #8]
-	add	x10, x10, #1
-	str	x10, [x9]
 59:	subs	w3, w3, #1
 	b.ne	50b
 	mov	x30, x15
+	ret
+
+/* Export the mapped Normal block runs as sorted, coalesced [base, length] pairs. */
+rpi5_mmu_build_ranges:
+	mov	x0, x30
+	ldr	x1, =arm64_bpt_l2_pt0
+	ldr	x2, =rpi5_mmu_ranges
+	mov	x3, xzr			/* L2 index */
+	mov	x4, xzr			/* exported range count */
+	ldr	x9, =0x705
+	ldr	x10, =(PTE_NORMAL & 0x705)
+60:	cmp	x3, #512
+	b.hs	67f
+	ldr	x5, [x1, x3, lsl #3]
+	and	x5, x5, x9
+	cmp	x5, x10
+	b.ne	66f
+	mov	x6, x3			/* first block in run */
+61:	add	x3, x3, #1
+	cmp	x3, #512
+	b.hs	62f
+	ldr	x5, [x1, x3, lsl #3]
+	and	x5, x5, x9
+	cmp	x5, x10
+	b.eq	61b
+62:	cmp	x4, #MAX_RAM_RANGES
+	b.hs	rpi5_mmu_too_many_ranges
+	lsl	x7, x6, #30
+	sub	x8, x3, x6
+	lsl	x8, x8, #30
+	str	x7, [x2], #8
+	str	x8, [x2], #8
+	add	x4, x4, #1
+	b	60b
+66:	add	x3, x3, #1
+	b	60b
+67:	cbz	x4, rpi5_mmu_no_memory
+	ldr	x5, =rpi5_mmu_range_count
+	str	x4, [x5]
+	mov	x30, x0
 	ret
 
 /* Fail unless x0 resolves through an L2 Normal block descriptor. */
