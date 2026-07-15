@@ -182,8 +182,12 @@ ENTRY(rpi5_start_mmu)
 	dsb	nsh
 	ldr	x0, =0x00000000000000ff	/* Attr0 Normal WBWA, Attr1 Device */
 	msr	mair_el1, x0
-	ldr	x0, =0x0000000280803528	/* 40-bit PA/VA, TTBR1 disabled, 4K WBWA IS */
+	ldr	x0, =0x0000000280803518	/* 40-bit PA/VA, TTBR1 disabled, 4K WBWA IS */
 	msr	tcr_el1, x0
+	isb
+	/* SWD/GDB may replace the image without invalidating stale I-cache lines. */
+	ic	iallu
+	dsb	sy
 	isb
 	mrs	x0, sctlr_el1
 	ldr	x1, =SCTLR_CLEAR_BITS
@@ -205,6 +209,7 @@ END(rpi5_start_mmu)
  * All parser failures branch to the shared non-returning error path.
  */
 ENTRY(rpi5_mmu_parse_fdt)
+	mov	x21, x30
 
 	/*
 	 * Validate the header before following any offset.  x26 is the end of the
@@ -395,6 +400,7 @@ ENTRY(rpi5_mmu_parse_fdt)
 	ldr	x0, =rpi5_mmu_range_count
 	ldr	x0, [x0]
 	cbz	x0, rpi5_mmu_no_memory
+	mov	x30, x21
 	ret
 END(rpi5_mmu_parse_fdt)
 
