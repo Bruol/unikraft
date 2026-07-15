@@ -75,10 +75,3 @@ something that works extreamly well is setting up tmux with gdb and tio side by 
 - https://github.com/Utsav-Agarwal/HobOS/
 - https://main.lv/writeup/raspberry5_baremetal_uart.md
 
-
-# write differences in rpi3 plat vs arm and why is the rpi5 implementation closer to arm then to rpi3
-- in plat-raspi most values are hardcoded. DTB is not saved and ukplat_entry is called with empty args
-- kvm/arm is far more general, has PIE and relocation logic. on raspi the firmware always loads the kernel at a set address so no relocation is needed. 
-- uart is handled differntly in rpi3 platform. On rp1 you have to set up GPIO muxing for UART and configure much of the UART device such as baud rate etc. On rpi5 much of this is done by the firmware on the rp1.
-- Also there are some differences in the mailbox interface between rpi3 and rpi5. 1) there are separate mailboxes for soc firmware and rp1. 2) fewer tags/properties work on rpi5 firmware.
-
