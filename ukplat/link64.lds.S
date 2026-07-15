@@ -80,6 +80,14 @@ SECTIONS {
 	{
 		KEEP(*(.rpi5_reload))
 	} :text
+	ASSERT(. <= 0x200400,
+	       "Pi 5 reload trampoline overlaps its fixed park address")
+
+	. = 0x200400;
+	.rpi5_reload_park :
+	{
+		KEEP(*(.rpi5_reload_park))
+	} :text
 
 	. = ALIGN(__PAGE_SIZE);
 	_etext = .;
@@ -120,6 +128,8 @@ SECTIONS {
 	DATA_SECTIONS
 
 	_end = .;
+	ASSERT(_end <= 0x300000,
+	       "Pi 5 image exceeds the reload invalidation reservation")
 
 	.comment 0 : { *(.comment) }
 	DEBUG_SYMBOLS

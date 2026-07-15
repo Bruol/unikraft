@@ -110,9 +110,19 @@ rpi5_reload_trampoline:
 	ic	iallu
 	dsb	sy
 	isb
+	b	rpi5_reload_park
 
+.size rpi5_reload_trampoline, . - rpi5_reload_trampoline
+
+/*
+ * This label lives in a separate linker-fixed section.  GDB must stop the
+ * resident (old) image before loading the incoming image, so its address is a
+ * reload ABI constant and must not depend on either image's code size.
+ */
+.section .rpi5_reload_park, "ax"
 .global rpi5_reload_park
+.type rpi5_reload_park, %function
 rpi5_reload_park:
 	wfe
 	b	rpi5_reload_park
-.size rpi5_reload_trampoline, . - rpi5_reload_trampoline
+.size rpi5_reload_park, . - rpi5_reload_park

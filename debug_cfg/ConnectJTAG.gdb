@@ -3,6 +3,12 @@ target extended-remote :3333
 set $rpi5_dtb_addr = 0x10000000
 
 python
+import os
+
+RPI5_RELOAD_ENTRY = 0x200000
+RPI5_RELOAD_PARK = 0x200400
+RPI5_DTB_MAX_SIZE = 0x14000
+
 class Rpi5Reload(gdb.Command):
     """Safely return a warm Pi 5 target to MMU/cache-off state and reload it."""
 
@@ -11,15 +17,25 @@ class Rpi5Reload(gdb.Command):
 
     def invoke(self, arg, from_tty):
         del arg, from_tty
-        resident = bytes(gdb.selected_inferior().read_memory(0x200000, 8))
+        dtb_path = "debug_cfg/bcm2712-rpi-5-b.dtb"
+        dtb_size = os.path.getsize(dtb_path)
+        if dtb_size > RPI5_DTB_MAX_SIZE:
+            raise gdb.GdbError(
+                "DTB is %#x bytes; reload reservation is %#x bytes" %
+                (dtb_size, RPI5_DTB_MAX_SIZE))
+
+        resident = bytes(gdb.selected_inferior().read_memory(
+            RPI5_RELOAD_ENTRY, 8))
         if resident == b"\xdf\x4f\x03\xd5\x9f\x3f\x03\xd5":
             gdb.write("Normalizing target through the resident reload trampoline.\n")
-            park = int(gdb.parse_and_eval("&rpi5_reload_park"))
-            bp = gdb.Breakpoint("*%#x" % park, gdb.BP_HARDWARE_BREAKPOINT,
+            bp = gdb.Breakpoint("*%#x" % RPI5_RELOAD_PARK,
+                                gdb.BP_HARDWARE_BREAKPOINT,
                                 temporary=True, internal=True)
+            # OpenOCD ignores a raw numeric assignment to $pc on this target;
+            # this symbol is linker-asserted at the resident ABI entry address.
             gdb.execute("set $pc = rpi5_reload_trampoline")
             gdb.execute("continue")
-            if int(gdb.parse_and_eval("$pc")) != park:
+            if int(gdb.parse_and_eval("$pc")) != RPI5_RELOAD_PARK:
                 raise gdb.GdbError("reload trampoline did not reach its cache-off park")
             sctlr = int(gdb.parse_and_eval("$x0"))
             if sctlr & ((1 << 0) | (1 << 2) | (1 << 12)):

@@ -48,11 +48,16 @@ make && gdb -q -x debug_cfg/ConnectJTAG.gdb
 ```
 
 The script's `rpi5_reload` command is safe to repeat after a kernel has enabled
-the MMU and caches. It executes the resident trampoline at `0x200000`, which
+the MMU and caches. It executes the resident trampoline at `0x200000` and
+stops at the fixed reload-ABI park at `0x200400`, which
 cleans and invalidates data caches by set/way, invalidates I-cache and TLBs,
 disables `SCTLR_EL1.M/C/I` while executing in the identity map, and parks for
 GDB. The script permits a missing resident signature only for a cold EL2
 firmware halt; a warm EL1 target without the signature is rejected.
+
+The link fails if the image exceeds the reserved `[0x80000,0x300000)` reload
+range, and `rpi5_reload` rejects a DTB larger than its reserved `0x14000` bytes
+before changing target state.
 
 For consecutive-cycle validation, run the command above, `continue` to normal
 shutdown, quit GDB, and repeat without power cycling. Each warm attach prints
