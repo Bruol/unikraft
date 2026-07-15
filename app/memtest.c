@@ -4,6 +4,7 @@
 
 #define GIB (UINT64_C(1024) * 1024 * 1024)
 #define TARGET_BYTES (UINT64_C(4) * GIB)
+#define MIN_EXPECTED_BYTES (UINT64_C(4075) * 1024 * 1024)
 #define CHUNK_BYTES ((UINT64_C(4) * 1024 * 1024) - 64)
 #define CHUNK_COUNT ((TARGET_BYTES + CHUNK_BYTES - 1) / CHUNK_BYTES)
 
@@ -87,6 +88,13 @@ int main(int argc, char *argv[])
 		printf("rpi5-memtest: FAILED with %lu corrupt words\n",
 		       (unsigned long)errors);
 		return 1;
+	}
+	if (allocated < MIN_EXPECTED_BYTES) {
+		printf("rpi5-memtest: FAILED, verified only %lu MiB; expected "
+		       "at least %lu MiB from both firmware RAM banks\n",
+		       (unsigned long)(allocated / (1024 * 1024)),
+		       (unsigned long)(MIN_EXPECTED_BYTES / (1024 * 1024)));
+		return 2;
 	}
 	if (allocated != TARGET_BYTES) {
 		printf("rpi5-memtest: PASS, verified all %lu allocatable MiB "

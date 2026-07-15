@@ -40,3 +40,4 @@
 2026-07-15: Hardware boot with the live split-bank DTB produced 9 bootinfo descriptors and 4090.953 MiB allocator capacity. Adjusted memtest chunks from 4 MiB to 4 MiB minus 64 bytes after malloc metadata doubled the original buddy allocation; the final run allocated and verified 4075 MiB in 1019 chunks without corruption.
 2026-07-15: Addressed MR review: reject RAM tuples that partially overlap the kernel image, and make memtest return success after verifying all allocatable RAM without corruption even when reservations prevent reaching 4 GiB.
 2026-07-15: Fixed memtest result precedence so detected corruption fails before the expected capacity-shortfall success path.
+2026-07-15: Require memtest to verify at least 4075 MiB so allocation failure or loss of the second firmware RAM bank cannot pass as an expected reservation shortfall.
