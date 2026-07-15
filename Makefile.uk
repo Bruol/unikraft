@@ -3,6 +3,10 @@
 
 $(eval $(call addplat_s,rpi5,$(CONFIG_PLAT_RPI5)))
 
+ifeq ($(CONFIG_PLAT_RPI5)$(CONFIG_OPTIMIZE_PIE),yy)
+$(error plat-rpi5 requires a fixed-address image; CONFIG_OPTIMIZE_PIE is unsupported)
+endif
+
 
 
 

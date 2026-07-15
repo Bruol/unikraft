@@ -36,7 +36,6 @@
 #include <uk/asm/lcpu.h>
 #include <uk/config.h>
 #include <uk/plat/common/sections.h>
-#include <uk/reloc.h>
 
 #define BOOTSTACK_SIZE 4096
 .section .bss
@@ -65,6 +64,15 @@ ENTRY(_librpi5plat_entry)
 	eret
 
 5:
+	/*
+	 * This platform is linked as a fixed-address image.  ADR computes the
+	 * actual runtime address while the literal is the link-time address.
+	 */
+	adr	x1, _base_addr
+	ldr	x2, =_base_addr
+	cmp	x1, x2
+	b.ne	rpi5_bad_load_address
+
 	// Load vector table in exceptions.S.
 	ldr	x1, =vector_table
 	msr	VBAR_EL1, x1
@@ -115,14 +123,6 @@ ENTRY(_librpi5plat_entry)
 	mov	x1, #64
 	bl	rpi5_pl011_dump_mem
 
-	ldr	x0, =rpi5_msg_reloc
-	bl	rpi5_pl011_puts
-	mov	x0, xzr
-	mov	x1, xzr
-	bl	do_uk_reloc
-
-
-
 	ldr	x0, =rpi5_msg_pcpu
 	bl	rpi5_pl011_puts
 	ldr	x1, =_uk_pcpuvar_base
@@ -138,6 +138,12 @@ ENTRY(_librpi5plat_entry)
 	b	rpi5_ukplat_entry
 END(_librpi5plat_entry)
 
+.global rpi5_bad_load_address
+rpi5_bad_load_address:
+	/* x1: actual runtime base, x2: required link-time base. */
+	wfe
+	b	rpi5_bad_load_address
+
 .section .rodata
 rpi5_msg_entry:
 	.asciz "\r\nrpi5: unikraft entry\r\n"
@@ -145,8 +151,6 @@ rpi5_msg_dtb:
 	.asciz "rpi5: x0/dtb = 0x"
 rpi5_msg_crlf:
 	.asciz "\r\n"
-rpi5_msg_reloc:
-	.asciz "rpi5: reloc\r\n"
 rpi5_msg_pcpu:
 	.asciz "rpi5: pcpuvar\r\n"
 rpi5_msg_fdt:

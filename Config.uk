@@ -16,7 +16,8 @@ menuconfig PLAT_RPI5
 	imply LIBUKOFW
 	imply LIBUKINTCTLR_GICV2
 	help
-		Build a Unikraft image for direct Raspberry Pi 5 firmware boot.
+		Build a fixed-address Unikraft image for direct Raspberry Pi 5
+		firmware boot. Static PIE is not supported by this platform.
 
 if PLAT_RPI5
 
