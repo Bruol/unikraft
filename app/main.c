@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <bruol.h>
+#include "bruol.h"
 
 int main(int argc, char *argv[])
 {

@@ -41,17 +41,10 @@ connect the UART port on the raspi to the D port on the probe and run this comma
 sudo openocd --file debug_cfg/cmsis-dap.cfg --file debug_cfg/openocd_raspi5.cfg
 ```
 
-to connect gdb run:
+to connect gdb and upload a new kernel run:
 
 ```bash
-make && gdb -q -ex 'set confirm off' -ex 'target extended-remote :3333' -ex 'file build/kernel.elf' -ex 'load' -ex 'tbreak src/start.S:19' -ex 'continue' -ex 'set $x0 = 0' -ex 'break kernel_main'
-```
-
-then run in gdb
-
-```gdb
-set $x0 = 0 
-continue
+make && gdb -q -x debug_cfg/ConnectJTAG.gdb
 ```
 
 
