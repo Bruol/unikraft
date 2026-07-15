@@ -1,7 +1,22 @@
-menuconfig APP_RPI5_HELLO
-	bool "Raspberry Pi 5 smoke-test app"
-	default y
-	select LIBNOLIBC
+choice
+	prompt "Raspberry Pi 5 test application"
+	default APP_RPI5_MEMTEST
+
+config APP_RPI5_HELLO
+	bool "Hello World smoke test"
 	help
-		Small default application for one-command Raspberry Pi 5
-		Unikraft image builds.
+		Small Hello World application for Raspberry Pi 5 platform builds.
+
+config APP_RPI5_MEMTEST
+	bool "4 GiB RAM stress test"
+	help
+		Allocate RAM in chunks up to 4 GiB, fill every word with a
+		deterministic pattern, verify it, and report any capacity shortfall
+		or corruption.
+
+endchoice
+
+config APP_RPI5_TEST_APP
+	def_bool y
+	select LIBNOLIBC
+	select LIBUKALLOC
