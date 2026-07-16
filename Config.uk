@@ -14,12 +14,20 @@ menuconfig PLAT_RPI5
 	select HAVE_FDT
 	imply LIBFDT
 	imply LIBUKOFW
-	imply LIBUKINTCTLR_GICV2
+	select LIBUKINTCTLR_GICV2
 	help
 		Build a fixed-address Unikraft image for direct Raspberry Pi 5
 		firmware boot. Static PIE is not supported by this platform.
 
 if PLAT_RPI5
+
+config ARM_GENERIC_TIMER_PHYSICAL
+	bool
+	default y
+	help
+		Use the non-secure physical ARM generic timer (CNTP) rather than
+		the virtual timer (CNTV). The timer interrupt is taken from DT
+		interrupt tuple 1.
 
 config RPI5_SINGLE_CORE_BOOT
 	bool "Park secondary cores"

@@ -1,6 +1,6 @@
 choice
 	prompt "Raspberry Pi 5 test application"
-	default APP_RPI5_MEMTEST
+	default APP_RPI5_TIMER_TEST
 
 config APP_RPI5_HELLO
 	bool "Hello World smoke test"
@@ -13,6 +13,12 @@ config APP_RPI5_MEMTEST
 		Allocate RAM in chunks up to 4 GiB, fill every word with a
 		deterministic pattern, verify it, and report any capacity shortfall
 		or corruption.
+
+config APP_RPI5_TIMER_TEST
+	bool "ARM physical timer stress test"
+	help
+		Verify monotonic counter reads and run 1000 sequential 10 ms
+		scheduler sleeps through the ARM physical generic timer.
 
 endchoice
 
