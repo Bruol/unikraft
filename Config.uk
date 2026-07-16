@@ -21,14 +21,6 @@ menuconfig PLAT_RPI5
 
 if PLAT_RPI5
 
-config ARM_GENERIC_TIMER_PHYSICAL
-	bool
-	default y
-	help
-		Use the non-secure physical ARM generic timer (CNTP) rather than
-		the virtual timer (CNTV). The timer interrupt is taken from DT
-		interrupt tuple 1.
-
 config RPI5_SINGLE_CORE_BOOT
 	bool "Park secondary cores"
 	default y
