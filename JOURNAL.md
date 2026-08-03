@@ -51,3 +51,4 @@
 2026-07-16: Added Lorin Urbantat to the author and 2026 copyright lines emitted by both patched ARM timer sources.
 2026-07-16: Replaced the build-time timer patches with attributed platform-owned `ukplat/time.c` and `ukplat/generic_timer.c`. Removed `ARM_GENERIC_TIMER_PHYSICAL`; RPi 5 now unconditionally uses CNTP registers and DT interrupt tuple 1.
 2026-07-16: Documented at the top of both platform timer sources that they are adapted from the corresponding Unikraft `plat/common/arm` implementations and describe the RPi 5 physical-timer specialization.
+2026-08-03: Added concise README documentation for Pi 5 GICv2 and physical ARM timer support, including DT interrupt selection, scheduler wake-ups, and hardware validation.

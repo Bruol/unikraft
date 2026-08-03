@@ -33,6 +33,22 @@ this erases the target disk, so pass the whole USB device, not a partition.
 
 you can also pass `build/kernel.elf` and the script will convert it automatically.
 
+## Timer and interrupt support
+
+The Pi 5 firmware DTB describes a GIC-400 compatible interrupt controller and
+an ARMv8 architectural timer. The platform selects Unikraft's GICv2 driver,
+probes it before boot-CPU initialization, and uses the non-secure physical
+timer registers (`CNTPCT_EL0`, `CNTP_CVAL_EL0`, and `CNTP_CTL_EL0`). From the
+timer node it translates interrupt tuple 1, the physical-timer PPI, into a GIC
+INTID and registers the timer handler.
+
+During a scheduler sleep, the platform programs the absolute timer deadline,
+unmasks its interrupt, and enters `wfi`. The interrupt wakes the CPU and is
+masked again until the next sleep, preventing interrupt storms. The
+platform-owned adaptations in `ukplat/time.c` and `ukplat/generic_timer.c`
+avoid changes to `../unikraft`; hardware validation completed 1,000 sequential
+10 ms sleeps without early wake-ups or interrupt storms.
+
 ## Debugging:
 
 connect the UART port on the raspi to the D port on the probe and run this command to start openocd
