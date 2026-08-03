@@ -100,3 +100,15 @@ something that works extreamly well is setting up tmux with gdb and tio side by 
 - https://github.com/rsta2/circle
 - https://github.com/Utsav-Agarwal/HobOS/
 - https://main.lv/writeup/raspberry5_baremetal_uart.md
+
+## PCIE
+Pi has two independent PCIE links (2 root controllers). one (Gen2 x 4) for communication with RP1. This handles USB, Ethernet, GPIO, UART, SPI, I^2C, etc. And another one (Gen2 x 1) which has an external connector which can be used with arbitrary PCIE devices
+
+in config.txt
+```bash
+pciex4_reset=0
+```
+tells the firmware not to reset PCIE before entering the kernel. This allows the kernel to take over the configuration made by tha rp1
+
+## Wifi
+Wifi is not on PCIE but on a separate SDIO bus
