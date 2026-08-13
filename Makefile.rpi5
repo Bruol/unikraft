@@ -15,7 +15,7 @@ all: build
 
 check-inputs:
 	@test -f "$(UK_BASE)/Makefile" || { echo "UK_BASE must point to this Unikraft tree (got $(UK_BASE))" >&2; exit 2; }
-	@test -f "$(UK_BASE)/plat/rpi5/Config.uk" || { echo "UK_BASE does not contain plat/rpi5" >&2; exit 2; }
+	@test -f "$(UK_BASE)/plat/native/rpi5/Config.uk" || { echo "UK_BASE does not contain plat/native/rpi5" >&2; exit 2; }
 	@test -f "$(UK_APP)/Makefile.uk" || { echo "UK_APP must point to a catalog application with Makefile.uk (got $(UK_APP))" >&2; exit 2; }
 
 $(UK_BUILD_DIR):
