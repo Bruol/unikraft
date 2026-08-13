@@ -1,0 +1,54 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build kernel",
+            "type": "shell",
+            "command": "make -f Makefile.rpi5",
+            "group": "build",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "upload kernel with GDB",
+            "type": "shell",
+            "command": "make -f Makefile.rpi5 && ${config:rpi5.gdbPath} -q -x debug_cfg/ConnectJTAG.gdb",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": "$gcc",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": true
+            }
+        },
+        {
+            "label": "openocd rpi5",
+            "type": "shell",
+            "command": "openocd -f debug_cfg/cmsis-dap.cfg -f debug_cfg/openocd_raspi5.cfg",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "openocd",
+                "pattern": {
+                    "regexp": "."
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "Open On-Chip Debugger",
+                    "endsPattern": "Listening on port 3333 for gdb connections"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        }
+    ]
+}

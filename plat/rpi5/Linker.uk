@@ -1,0 +1,58 @@
+ifeq (arm64,$(CONFIG_UK_ARCH))
+RPI5_LDFLAGS-y += -Wl,--entry=_librpi5plat_entry
+RPI5_LDFLAGS-y += -Wl,-m,aarch64elf
+RPI5_LDLIBS-y  += -lgcc
+endif
+
+RPI5_IMAGE := $(BUILD_DIR)/$(CONFIG_UK_NAME)_rpi5-$(CONFIG_UK_ARCH)
+RPI5_DEBUG_IMAGE := $(RPI5_IMAGE).dbg
+RPI5_COMPILE_DB_IMAGE := $(BUILD_DIR)/compile_commands.json
+
+RPI5_LD_SCRIPT_FLAGS := $(addprefix -Wl$(comma)-dT$(comma),\
+			 $(UK_PLAT_RPI5_DEF_LDS))
+RPI5_LD_SCRIPT_FLAGS += $(addprefix -Wl$(comma)-T$(comma),\
+			 $(RPI5_LD_SCRIPT-y) $(EXTRA_LD_SCRIPT-y))
+
+$(RPI5_DEBUG_IMAGE): $(RPI5_ALIBS) $(RPI5_ALIBS-y) $(RPI5_OLIBS) $(RPI5_OLIBS-y) \
+		     $(UK_ALIBS) $(UK_ALIBS-y) $(UK_OLIBS) $(UK_OLIBS-y) \
+		     $(RPI5_LD_SCRIPT-y) $(EXTRA_LD_SCRIPT-y) \
+		     $(UK_PLAT_RPI5_DEF_LDS) $(UK_LDEPS)
+	$(call build_cmd,LD,,$@,\
+	       $(LD) \
+			$(RPI5_LDFLAGS) $(RPI5_LDFLAGS-y) \
+			$(RPI5_OLIBS) $(RPI5_OLIBS-y) \
+			$(UK_OLIBS) $(UK_OLIBS-y) \
+			-Wl$(comma)--start-group \
+			$(RPI5_ALIBS) $(RPI5_ALIBS-y) \
+			$(UK_ALIBS) $(UK_ALIBS-y) \
+			-Wl$(comma)--end-group \
+			$(RPI5_LDLIBS) $(RPI5_LDLIBS-y) \
+			$(LDFLAGS) $(LDFLAGS-y) \
+			$(RPI5_LD_SCRIPT_FLAGS) \
+			-o $@)
+	$(call build_bootinfo,$@)
+
+$(RPI5_IMAGE): $(RPI5_DEBUG_IMAGE)
+	$(call build_cmd,OBJCOPY,,$@,\
+		$(OBJCOPY) -O binary $< $@)
+	$(call build_cmd,CP,,build/kernel_2712.img,\
+		cp $@ $(BUILD_DIR)/kernel_2712.img)
+	$(call build_cmd,CP,,build/kernel_2712.dbg,\
+		cp $< $(BUILD_DIR)/kernel_2712.dbg)
+
+$(RPI5_IMAGE).sym: $(RPI5_DEBUG_IMAGE)
+	$(call build_cmd,NM,,$@, $(NM) -n $< > $@)
+
+$(RPI5_COMPILE_DB_IMAGE): $(RPI5_IMAGE)
+	$(call build_compile_db,$(BUILD_DIR),$@)
+
+ifeq ($(CONFIG_PLAT_RPI5),y)
+UK_DEBUG_IMAGES-y                    += $(RPI5_DEBUG_IMAGE)
+UK_IMAGES-y                          += $(RPI5_IMAGE)
+UK_IMAGES-y                          += $(RPI5_COMPILE_DB_IMAGE)
+UK_IMAGES-$(CONFIG_OPTIMIZE_SYMFILE) += $(RPI5_IMAGE).sym
+endif
+
+LIBRPI5PLAT_CLEAN += $(call build_clean,$(RPI5_DEBUG_IMAGE).bootinfo)
+LIBRPI5PLAT_CLEAN += $(call build_clean,$(BUILD_DIR)/kernel_2712.img)
+LIBRPI5PLAT_CLEAN += $(call build_clean,$(BUILD_DIR)/kernel_2712.dbg)

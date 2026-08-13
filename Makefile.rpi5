@@ -1,0 +1,45 @@
+UK_BASE ?= $(CURDIR)
+UK_APP ?= $(abspath ../catalog/native/helloworld-c)
+UK_MAKE ?= gmake
+
+UK_BUILD_DIR := $(abspath build/rpi5)
+UK_CONFIG := $(abspath build/rpi5.config)
+UK_DEFCONFIG := $(abspath configs/rpi5_defconfig)
+UK_MAKE_ARGS := -C $(UK_BASE) A=$(UK_APP) O=$(UK_BUILD_DIR) C=$(UK_CONFIG) UK_CFLAGS=-std=gnu11
+KERNEL_IMAGE := $(UK_BUILD_DIR)/kernel_2712.img
+KERNEL_DEBUG := $(UK_BUILD_DIR)/kernel_2712.dbg
+
+.PHONY: all check-inputs configure build image verify clean flash-usb
+
+all: build
+
+check-inputs:
+	@test -f "$(UK_BASE)/Makefile" || { echo "UK_BASE must point to this Unikraft tree (got $(UK_BASE))" >&2; exit 2; }
+	@test -f "$(UK_BASE)/plat/rpi5/Config.uk" || { echo "UK_BASE does not contain plat/rpi5" >&2; exit 2; }
+	@test -f "$(UK_APP)/Makefile.uk" || { echo "UK_APP must point to a catalog application with Makefile.uk (got $(UK_APP))" >&2; exit 2; }
+
+$(UK_BUILD_DIR):
+	mkdir -p $@
+
+configure: check-inputs | $(UK_BUILD_DIR)
+	$(UK_MAKE) $(UK_MAKE_ARGS) DEFCONFIG=$(UK_DEFCONFIG) defconfig
+
+build: configure
+	$(UK_MAKE) $(UK_MAKE_ARGS)
+
+image: build
+	@test -s "$(KERNEL_IMAGE)"
+
+verify: image
+	@test -s "$(KERNEL_DEBUG)"
+	@test -s "$(UK_BUILD_DIR)/compile_commands.json"
+	@test -s "$(UK_BUILD_DIR)"/*_rpi5-arm64.sym
+	@echo "Verified Pi 5 image, debug ELF, symbols, and compile database."
+
+clean: check-inputs
+	$(UK_MAKE) $(UK_MAKE_ARGS) clean
+	$(RM) $(UK_CONFIG)
+
+flash-usb: image
+	@test -n "$(DEVICE)" || { echo "DEVICE is required (for example /dev/disk4)" >&2; exit 2; }
+	./scripts/flash_rpi5_usb.sh --kernel "$(KERNEL_IMAGE)" --device "$(DEVICE)"
