@@ -52,3 +52,9 @@
 2026-07-16: Replaced the build-time timer patches with attributed platform-owned `ukplat/time.c` and `ukplat/generic_timer.c`. Removed `ARM_GENERIC_TIMER_PHYSICAL`; RPi 5 now unconditionally uses CNTP registers and DT interrupt tuple 1.
 2026-07-16: Documented at the top of both platform timer sources that they are adapted from the corresponding Unikraft `plat/common/arm` implementations and describe the RPi 5 physical-timer specialization.
 2026-08-03: Added concise README documentation for Pi 5 GICv2 and physical ARM timer support, including DT interrupt selection, scheduler wake-ups, and hardware validation.
+2026-08-13: Mirrored the fs26 AST report scaffold in `../report`: Pandoc defaults, Docker compile script, numbered chapter placeholders, README, and output directory, adapted for the Raspberry Pi 5 Unikraft project.
+2026-08-13: Configured `../report/.vscode` to compile the Pandoc report after Markdown or YAML saves with the Emeraldwalk Run on Save extension, and recommended that extension to VS Code.
+2026-08-13: Updated `../report/compile.sh` to build the main report into a temporary PDF and append `originality.pdf` to the final `output/report.pdf` with qpdf.
+2026-08-13: Filled `../report/chapters/originality.pdf` by crossing the second declaration option and setting the work title to "Porting Unikraft to Raspberry Pi 5"; rebuilt and visually verified the report's final page.
+2026-08-13: Added "Urbantat, Lorin" to the first name field in `../report/chapters/originality.pdf`, then rebuilt and visually verified the final report.
+2026-08-13: Corrected the originality declaration fields to show surname "Urbantat" under `Name(n)` and given names "Richard Lorin" under `Vorname(n)`; rebuilt and visually verified the report.
