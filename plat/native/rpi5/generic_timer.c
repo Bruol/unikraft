@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 /*
  * Authors: Wei Chen <Wei.Chen@arm.com>
- *          Lorin Urbantat
+ *          Lorin Urbantat <lorin@urbantat.eu>
  *
  * Copyright (c) 2018, Arm Ltd. All rights reserved.
  * Copyright (c) 2026, Lorin Urbantat. All rights reserved.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+// TODO: consolidate this with common/generic_timer.c The code here is reused
+// 90% maybe there is a cleaner way then to copy it
 
 #include <uk/arch/types.h>
 #include <uk/arch/util.h>
@@ -69,8 +72,8 @@ static __u64 tot_ns_per_tick;
  * of conversion, because we will get smaller multiplier and shift factors.
  * In this case, we selected 3600s as the time range.
  */
-#define __MAX_CONVERT_SECS	(3600UL)
-#define __MAX_CONVERT_NS	(3600UL*NSEC_PER_SEC)
+#define __MAX_CONVERT_SECS (3600UL)
+#define __MAX_CONVERT_NS (3600UL * NSEC_PER_SEC)
 static __u64 max_convert_ticks;
 
 #define generic_timer_ctl_read() get_el0(cntp_ctl)
@@ -122,7 +125,6 @@ static void calculate_mult_shift(__u32 *mult, __u8 *shift, __u64 from, __u64 to)
 		tmp >>= 1;
 		sftacc--;
 	}
-
 
 	/*
 	 * Calculate shift factor (S) and scaling multiplier (M).
@@ -263,8 +265,7 @@ void generic_timer_cpu_block_until(__u64 until_ns)
 
 	if (now_ns < until_ns) {
 		/* Calculate until_ticks for timer */
-		until_ticks = now_ticks
-			+ ns_to_ticks(until_ns - now_ns);
+		until_ticks = now_ticks + ns_to_ticks(until_ns - now_ns);
 		generic_timer_update_compare(until_ticks);
 		generic_timer_enable();
 		generic_timer_unmask_irq();
@@ -292,8 +293,8 @@ int generic_timer_init(int fdt_timer)
 	 * Calculate the shift factor and scaling multiplier for
 	 * converting ticks to ns.
 	 */
-	calculate_mult_shift(&ns_per_tick, &counter_shift_to_ns,
-				counter_freq, NSEC_PER_SEC);
+	calculate_mult_shift(&ns_per_tick, &counter_shift_to_ns, counter_freq,
+			     NSEC_PER_SEC);
 
 	/* We disallow zero ns_per_tick */
 	UK_BUGON(!ns_per_tick);
@@ -302,13 +303,13 @@ int generic_timer_init(int fdt_timer)
 	 * Calculate the shift factor and scaling multiplier for
 	 * converting ns to ticks.
 	 */
-	calculate_mult_shift(&tick_per_ns, &counter_shift_to_tick,
-				NSEC_PER_SEC, counter_freq);
+	calculate_mult_shift(&tick_per_ns, &counter_shift_to_tick, NSEC_PER_SEC,
+			     counter_freq);
 
 	/* We disallow zero ns_per_tick */
 	UK_BUGON(!tick_per_ns);
 
-	max_convert_ticks = __MAX_CONVERT_SECS*counter_freq;
+	max_convert_ticks = __MAX_CONVERT_SECS * counter_freq;
 
 	return 0;
 }
