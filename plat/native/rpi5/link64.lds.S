@@ -70,6 +70,7 @@ SECTIONS {
 		*(.text.*)
 	} :text
 
+#if CONFIG_RPI5_EARLY_GDB_SPINLOOP
 	/*
 	 * Keep the warm-reload trampoline at a build-independent identity-mapped
 	 * address.  GDB executes the copy from the previous image before replacing
@@ -88,6 +89,7 @@ SECTIONS {
 	{
 		KEEP(*(.rpi5_reload_park))
 	} :text
+#endif
 
 	. = ALIGN(__PAGE_SIZE);
 	_etext = .;
@@ -128,8 +130,10 @@ SECTIONS {
 	DATA_SECTIONS
 
 	_end = .;
+#if CONFIG_RPI5_EARLY_GDB_SPINLOOP
 	ASSERT(_end <= 0x300000,
 	       "Pi 5 image exceeds the reload invalidation reservation")
+#endif
 
 	.comment 0 : { *(.comment) }
 	DEBUG_SYMBOLS

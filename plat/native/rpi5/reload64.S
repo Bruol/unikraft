@@ -2,6 +2,9 @@
 /* Copyright (c) 2026, Lorin Urbantat. */
 
 #include <uk/asm.h>
+#include <uk/config.h>
+
+#if CONFIG_RPI5_EARLY_GDB_SPINLOOP
 
 /*
  * Resident warm-reload trampoline.
@@ -126,3 +129,4 @@ rpi5_reload_park:
 	wfe
 	b	rpi5_reload_park
 .size rpi5_reload_park, . - rpi5_reload_park
+#endif

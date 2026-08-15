@@ -90,13 +90,14 @@ ENTRY(_librpi5plat_entry)
 
 
 
+#if CONFIG_RPI5_EARLY_GDB_SPINLOOP
 	// Early debug stop: attach GDB, then clear x2 or rpi5_gdb_spin_flag.
 	ldr	x3, =rpi5_gdb_spin_flag
 4:
 	ldr	x2, [x3]
 	nop
 	cbnz	x2, 4b
-
+#endif
 
 	ldr	x1, =bootstack_top
 	mov	sp, x1
@@ -162,6 +163,8 @@ rpi5_msg_setup:
 	.asciz "rpi5: handoff to ukplat setup\r\n"
 
 .section .data
+#if CONFIG_RPI5_EARLY_GDB_SPINLOOP
 .global rpi5_gdb_spin_flag
 rpi5_gdb_spin_flag:
 	.quad 1
+#endif

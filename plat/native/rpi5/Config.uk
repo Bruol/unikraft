@@ -21,19 +21,13 @@ menuconfig PLAT_RPI5
 
 if PLAT_RPI5
 
-config RPI5_SINGLE_CORE_BOOT
-	bool "Park secondary cores"
-	default y
-	help
-		Park all non-boot cores while the first platform path is
-		brought up.
-
 config RPI5_EARLY_GDB_SPINLOOP
 	bool "Stop in an early GDB spin loop"
 	default y
 	help
 		Stop the boot CPU in a simple early spin loop before stack and
 		BSS setup. In GDB, clear `x2` while stopped at the loop `nop`,
-		or clear `rpi5_gdb_spin_flag`.
+		or clear `rpi5_gdb_spin_flag`. This also includes the resident
+		warm-reload trampoline and its fixed linker reservation.
 
 endif
