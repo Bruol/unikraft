@@ -11,7 +11,7 @@ STAGING_ROOT="${REPO_ROOT}/build/rpi5_usb"
 BOOT_DIR="${STAGING_ROOT}/bootfs"
 VOLUME_LABEL=${VOLUME_LABEL:-RPI5BOOT}
 KERNEL_DEST_NAME="kernel_2712.img"
-CONFIG_SOURCE="${REPO_ROOT}/config.txt"
+CONFIG_SOURCE="${REPO_ROOT}/plat/native/rpi5/config.txt"
 
 DEVICE=""
 KERNEL_PATH=""

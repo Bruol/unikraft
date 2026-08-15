@@ -98,7 +98,7 @@ something that works extreamly well is setting up tmux with gdb and tio side by 
 ## PCIE
 Pi has two independent PCIE links (2 root controllers). one (Gen2 x 4) for communication with RP1. This handles USB, Ethernet, GPIO, UART, SPI, I^2C, etc. And another one (Gen2 x 1) which has an external connector which can be used with arbitrary PCIE devices
 
-in config.txt
+in `plat/native/rpi5/config.txt`
 ```bash
 pciex4_reset=0
 ```
