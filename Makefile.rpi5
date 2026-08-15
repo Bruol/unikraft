@@ -4,7 +4,7 @@ UK_MAKE ?= gmake
 
 UK_BUILD_DIR := $(abspath build/rpi5)
 UK_CONFIG := $(abspath build/rpi5.config)
-UK_DEFCONFIG := $(abspath configs/rpi5_defconfig)
+UK_DEFCONFIG := $(abspath rpi5_config/rpi5_defconfig)
 UK_MAKE_ARGS := -C $(UK_BASE) A=$(UK_APP) O=$(UK_BUILD_DIR) C=$(UK_CONFIG) UK_CFLAGS=-std=gnu11
 KERNEL_IMAGE := $(UK_BUILD_DIR)/kernel_2712.img
 KERNEL_DEBUG := $(UK_BUILD_DIR)/kernel_2712.dbg
