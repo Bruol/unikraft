@@ -44,7 +44,7 @@
 .global bootstack_top
 bootstack_top:
 
-.text
+.section .text.boot, "ax"
 ENTRY(_librpi5plat_entry)
 	mov	x20, x0 // preserve dtb addr
 	// Drop to EL1 if in EL2 otherwise branch to 5.

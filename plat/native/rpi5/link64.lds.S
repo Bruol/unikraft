@@ -66,9 +66,12 @@ SECTIONS {
 	_text = .;
 	.text :
 	{
+		KEEP(*(.text.boot))
 		*(.text)
 		*(.text.*)
 	} :text
+	ASSERT(_librpi5plat_entry == _base_addr,
+	       "Pi 5 firmware entry must be the first image byte")
 
 #if CONFIG_RPI5_EARLY_GDB_SPINLOOP
 	/*
