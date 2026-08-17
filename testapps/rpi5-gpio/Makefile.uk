@@ -1,0 +1,4 @@
+$(eval $(call addlib,apprpi5gpio))
+
+APPRPI5GPIO_CINCLUDES-y += -I$(CONFIG_UK_BASE)/plat/native/rpi5
+APPRPI5GPIO_SRCS-y += $(APPRPI5GPIO_BASE)/main.c

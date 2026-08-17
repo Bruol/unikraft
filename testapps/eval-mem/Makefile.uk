@@ -1,0 +1,3 @@
+$(eval $(call addlib,appevalmem))
+
+APPEVALMEM_SRCS-y += $(APPEVALMEM_BASE)/main.c

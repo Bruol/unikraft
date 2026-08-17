@@ -1,0 +1,3 @@
+$(eval $(call addlib,appevaltimer))
+
+APPEVALTIMER_SRCS-y += $(APPEVALTIMER_BASE)/main.c
