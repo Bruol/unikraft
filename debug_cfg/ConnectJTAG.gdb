@@ -67,4 +67,3 @@ MMU-off state. Then load the ELF/DTB and set pc/x0 for the platform entry.
 end
 
 rpi5_reload
-b rpi5_pl011_init
