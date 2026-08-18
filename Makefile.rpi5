@@ -33,7 +33,7 @@ image: build
 verify: image
 	@test -s "$(KERNEL_DEBUG)"
 	@test -s "$(UK_BUILD_DIR)/compile_commands.json"
-	@test -s "$(UK_BUILD_DIR)"/*_rpi5-arm64.sym
+	@for sym in "$(UK_BUILD_DIR)"/*_rpi5-arm64.sym; do test -s "$$sym" || exit 1; done
 	@echo "Verified Pi 5 image, debug ELF, symbols, and compile database."
 
 clean: check-inputs

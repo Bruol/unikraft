@@ -22,7 +22,10 @@ int main(void)
 {
 	int rc;
 
-	rc = rpi5_gpio_direction_output(GPIO_TEST_PIN, false);
+	rc = rpi5_gpio_direction(GPIO_TEST_PIN, RPI5_GPIO_DIRECTION_OUTPUT);
+	if (rc)
+		return rc;
+	rc = rpi5_gpio_set(GPIO_TEST_PIN, false);
 	if (rc)
 		return rc;
 	uk_pr_info("rpi5-gpio-test: GPIO %u LOW\n", GPIO_TEST_PIN);

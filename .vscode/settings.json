@@ -1,3 +1,4 @@
 {
-  "rpi5.gdbPath": "gdb"
+  "rpi5.gdbPath": "gdb",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/rpi5/compile_commands.json"
 }

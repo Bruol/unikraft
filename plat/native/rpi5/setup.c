@@ -7,6 +7,7 @@
 #include <uk/print.h>
 
 #include "pl011.h"
+#include "rpi5_gpio.h"
 
 static int rpi5_bootinfo_reserve_null_page(struct ukplat_bootinfo *bi)
 {
@@ -57,6 +58,10 @@ void rpi5_ukplat_entry(void)
 	rc = rpi5_bootinfo_reserve_null_page(bi);
 	if (rc)
 		UK_CRASH("rpi5: could not reserve the null page: %d\n", rc);
+
+	rc = rpi5_gpio_init();
+	if (rc)
+		uk_pr_err("rpi5: RP1 GPIO probe unavailable: %d\n", rc);
 
 	rc = ukplat_mem_init();
 	if (rc)
