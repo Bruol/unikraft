@@ -31,7 +31,7 @@ int main(void)
 	uk_pr_info("rpi5-gpio-test: GPIO %u LOW\n", GPIO_TEST_PIN);
 	wait_msec(50);
 
-	for (int i = 0; i <= 10; i++) {
+	for (int i = 0; i < 10; i++) {
 
 		rc = rpi5_gpio_set(GPIO_TEST_PIN, true);
 		if (rc)
