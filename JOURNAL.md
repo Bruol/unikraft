@@ -80,3 +80,4 @@
 2026-08-18: Simplified RP1 GPIO initialization to the fixed firmware BAR contract shared with PL011 (`0x1c00000000`): GPIO/RIO/pads use offsets `0xd0000/0xe0000/0xf0000`. Removed runtime DT parsing, PCIe BAR/bus discovery, root-complex repair, and PCIe write pacing. Updated the handoff notes and verified the Pi 5 image, symbols, and compile database.
 2026-08-18: Added and uploaded an interactive HTML checklist covering the 31 subsection review recommendations; completion state is persisted in browser local storage.
 2026-08-18: Added an expandable alternative formulation to every checklist point and uploaded the revised HTML checklist.
+2026-08-25: Removed the development-only pre-MMU checks that re-read the bootstrap page table to confirm Normal mappings for the kernel, stack, translation tables, and DTB. Removed the unused helper and error code 10 path.

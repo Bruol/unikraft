@@ -74,7 +74,7 @@
  *
  * Returns with VA=PA translation plus instruction/data caches enabled.  x19
  * keeps the caller's LR because the parser calls local helper routines; x20
- * keeps the FDT address live throughout table construction and validation.
+ * keeps the FDT address live throughout table construction.
  */
 ENTRY(rpi5_start_mmu)
 	/*
@@ -130,40 +130,6 @@ ENTRY(rpi5_start_mmu)
 	add	x3, x3, #1
 	cmp	x3, #128
 	b.lo	91b
-
-	/*
-	 * Before setting SCTLR_EL1.M, verify that every object needed across the
-	 * VA=PA transition resolves through a Normal 1 GiB block descriptor:
-	 *
-	 *   - _base_addr and _end - 1 cover the complete contiguous kernel image,
-	 *     including its BSS and the downward-growing boot stack;
-	 *   - bootstack_top - 1 explicitly documents that the active stack is in a
-	 *     mapped block;
-	 *   - arm64_bpt_l3_pt0 verifies that the translation tables themselves are
-	 *     reachable while the processor performs table walks;
-	 *   - x20 and x26 - 1 cover the complete firmware FDT.  x26 was computed as
-	 *     x20 + fdt_totalsize during header validation.
-	 *
-	 * _end and x26 are exclusive endpoints, which is why one is subtracted
-	 * before checking them.  The objects are contiguous and the mapping unit is
-	 * a 1 GiB block, so checking their first and last bytes covers every block
-	 * they touch.  A missing or Device-typed block stops boot with MMU error 10
-	 * instead of causing an immediate translation or memory-attribute fault.
-	 */
-	ldr	x0, =_base_addr
-	bl	rpi5_mmu_require_normal
-	ldr	x0, =_end
-	sub	x0, x0, #1
-	bl	rpi5_mmu_require_normal
-	ldr	x0, =bootstack_top
-	sub	x0, x0, #1
-	bl	rpi5_mmu_require_normal
-	ldr	x0, =arm64_bpt_l3_pt0
-	bl	rpi5_mmu_require_normal
-	mov	x0, x20
-	bl	rpi5_mmu_require_normal
-	sub	x0, x26, #1
-	bl	rpi5_mmu_require_normal
 
 	/*
 	 * Publish descriptors before TTBR0, invalidate stale EL1 translations, then
@@ -505,26 +471,12 @@ rpi5_mmu_build_ranges:
 	mov	x30, x0
 	ret
 
-/* Fail unless x0 resolves through an L2 Normal block descriptor. */
-rpi5_mmu_require_normal:
-	lsr	x1, x0, #30
-	cmp	x1, #512
-	b.hs	rpi5_mmu_uncovered
-	ldr	x2, =arm64_bpt_l2_pt0
-	ldr	x2, [x2, x1, lsl #3]
-	ldr	x3, =0x705
-	and	x2, x2, x3
-	ldr	x3, =(PTE_NORMAL & 0x705)
-	cmp	x2, x3
-	b.ne	rpi5_mmu_uncovered
-	ret
-
 /*
  * Pre-UART failure ABI (x0 and rpi5_mmu_error):
  *   1 bad magic          2 invalid header/bounds   3 bad structure token
  *   4 bad string offset  5 unsupported cell width 6 malformed reg
  *   7 no RAM             8 RAM/Device overlap     9 metadata capacity
- *  10 required address not Normal                11 MMU/data cache already on
+ *  11 MMU/data cache already on
  */
 rpi5_mmu_bad_magic:       mov x0, #1; b rpi5_mmu_fail
 rpi5_mmu_bad_header:      mov x0, #2; b rpi5_mmu_fail
@@ -535,7 +487,6 @@ rpi5_mmu_bad_reg:         mov x0, #6; b rpi5_mmu_fail
 rpi5_mmu_no_memory:       mov x0, #7; b rpi5_mmu_fail
 rpi5_mmu_device_overlap:  mov x0, #8; b rpi5_mmu_fail
 rpi5_mmu_too_many_ranges: mov x0, #9; b rpi5_mmu_fail
-rpi5_mmu_uncovered:       mov x0, #10
 .global rpi5_mmu_fail
 rpi5_mmu_fail:
 	ldr	x1, =rpi5_mmu_error
