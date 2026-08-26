@@ -87,3 +87,5 @@
 2026-08-26: Removed the incorrect Device-nGnRnE mapping and memory descriptor for `[3 GiB, 4 GiB)`; DT-reported RAM there now remains Normal WBWA. The 64–128 GiB BCM2712 peripheral aperture remains Device-nGnRnE.
 2026-08-26: Added `testapps/dynamic-paging` and a dedicated defconfig. The hardware test maps an allocated page at 2 TiB, checks read-only and read/write permissions, verifies address translation, unmaps it, and confirms that no-fault access fails.
 2026-08-26: Moved the dynamic paging test defconfig beside the test application at `testapps/dynamic-paging/defconfig` and updated the documented build command.
+2026-08-26: Updated the report to describe managed dynamic paging, its bootstrap and device-remap integration, the hardware validation, remaining paging limits, and reproduction commands.
+2026-08-26: Added the checked-in `testapps/hello-world-cpp` C++ smoke-test application. Verified it with `make -f Makefile.rpi5 verify UK_APP=testapps/hello-world-cpp -j4`.
