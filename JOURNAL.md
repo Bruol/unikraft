@@ -89,3 +89,4 @@
 2026-08-26: Moved the dynamic paging test defconfig beside the test application at `testapps/dynamic-paging/defconfig` and updated the documented build command.
 2026-08-26: Updated the report to describe managed dynamic paging, its bootstrap and device-remap integration, the hardware validation, remaining paging limits, and reproduction commands.
 2026-08-26: Added the checked-in `testapps/hello-world-cpp` C++ smoke-test application. Verified it with `make -f Makefile.rpi5 verify UK_APP=testapps/hello-world-cpp -j4`.
+2026-08-26: Updated the report's abstract, introduction, implementation, evaluation, conclusion, and reproduction guide to include the `testapps/hello-world-cpp` boot and console test.
