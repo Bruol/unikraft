@@ -81,3 +81,9 @@
 2026-08-18: Added and uploaded an interactive HTML checklist covering the 31 subsection review recommendations; completion state is persisted in browser local storage.
 2026-08-18: Added an expandable alternative formulation to every checklist point and uploaded the revised HTML checklist.
 2026-08-25: Removed the development-only pre-MMU checks that re-read the bootstrap page table to confirm Normal mappings for the kernel, stack, translation tables, and DTB. Removed the unused helper and error code 10 path.
+2026-08-26: Ported dynamic paging to `staging`: enabled native ARM64 paging, changed the bootstrap to 48-bit geometry, added the paging direct map, and described the RP1 DMA and BCM2712 MMIO ranges as Device-nGnRnE. Moved GPIO initialization after the managed-table switch and added `rpi5_config/rpi5_nopaging_defconfig` as the fixed-map fallback.
+2026-08-26: Moved RPi 5 early boot initialization before dynamic paging so bootinfo memory descriptors are coalesced before FREE regions are marked unmapped.
+2026-08-26: Remapped RPi 5 device regions locally after the managed page-table switch so Device-nGnRnE replaces the initial Normal-WB mappings without modifying another platform.
+2026-08-26: Removed the incorrect Device-nGnRnE mapping and memory descriptor for `[3 GiB, 4 GiB)`; DT-reported RAM there now remains Normal WBWA. The 64–128 GiB BCM2712 peripheral aperture remains Device-nGnRnE.
+2026-08-26: Added `testapps/dynamic-paging` and a dedicated defconfig. The hardware test maps an allocated page at 2 TiB, checks read-only and read/write permissions, verifies address translation, unmaps it, and confirms that no-fault access fails.
+2026-08-26: Moved the dynamic paging test defconfig beside the test application at `testapps/dynamic-paging/defconfig` and updated the documented build command.

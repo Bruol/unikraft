@@ -26,6 +26,21 @@ static void rpi5_free_mrd(struct ukplat_bootinfo *bi, __u64 base, __u64 len)
 		ukplat_bootinfo_crash("Could not add free memory descriptor");
 }
 
+static void rpi5_device_mrd(struct ukplat_bootinfo *bi, __u64 base, __u64 len)
+{
+	const struct ukplat_memregion_desc mrd = {
+		.pbase = base,
+		.vbase = base,
+		.len = len,
+		.pg_count = UK_PAGING_PAGE_COUNT(len),
+		.type = UKPLAT_MEMRT_DEVICE,
+		.flags = UKPLAT_MEMRF_READ | UKPLAT_MEMRF_WRITE,
+	};
+
+	if (unlikely(ukplat_memregion_list_insert(&bi->mrds, &mrd) < 0))
+		ukplat_bootinfo_crash("Could not add device memory descriptor");
+}
+
 static __u64 rpi5_read_cells(const fdt32_t *cells, int count)
 {
 	__u64 value = 0;
@@ -115,6 +130,9 @@ void ukplat_bootinfo_fdt_setup(void *fdtp)
 		ukplat_bootinfo_crash("Invalid bootinfo or DTB");
 	fdt_bootinfo_fdt_mrd(bi, fdtp);
 	rpi5_memory_mrds(bi, fdtp);
+	/* BCM2712 CPU peripheral aperture. */
+	rpi5_device_mrd(bi, 0x1000000000UL, 0x1000000000UL);
+	ukplat_memregion_list_coalesce(&bi->mrds);
 	fdt_bootinfo_initrd_mrd(bi, fdtp);
 	fdt_bootinfo_cmdl_init(bi, fdtp);
 	bi->dtb = (__u64)fdtp;

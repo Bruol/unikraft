@@ -6,6 +6,10 @@
  */
 
 #include <uk/plat/common/bootinfo.h>
+#if CONFIG_LIBUKPAGING
+#include <uk/paging.h>
+#include <uk/plat/native/page.h>
+#endif
 
 #define RPI5_MEMRF_UNMAP 0x0010
 
@@ -31,3 +35,32 @@ int _ukplat_mem_mappings_init(void)
 	 */
 	return 0;
 }
+
+#if CONFIG_LIBUKPAGING
+int rpi5_paging_remap_device_memory(void)
+{
+	struct ukplat_memregion_desc *mrd;
+	struct uk_pagetable *pt = uk_paging_pt_get_active();
+	const unsigned long attr = UK_PAGING_PAGE_ATTR_PROT_RW |
+		UK_PLAT_NATIVE_PAGE_ATTR_TYPE_DEVICE_nGnRnE;
+	int rc;
+
+	ukplat_memregion_foreach(&mrd, UKPLAT_MEMRT_DEVICE, 0, 0) {
+		/*
+		 * ARM64's generic attribute replacement retains template memory
+		 * type bits. Recreate these mappings locally so Device-nGnRnE
+		 * replaces the initial Normal-WB type without changing other
+		 * platforms.
+		 */
+		rc = uk_paging_page_unmap(pt, mrd->vbase, mrd->pg_count,
+					  UK_PAGING_PAGE_FLAG_KEEP_FRAMES);
+		if (unlikely(rc))
+			return rc;
+		rc = uk_paging_page_map(pt, mrd->vbase, mrd->pbase,
+					mrd->pg_count, attr, 0);
+		if (unlikely(rc))
+			return rc;
+	}
+	return 0;
+}
+#endif

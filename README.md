@@ -17,6 +17,26 @@ build the kernel:
 make -f Makefile.rpi5
 ```
 
+The default configuration enables `libukpaging`. It replaces the bootstrap
+identity map during `ukplat_mem_init()`. The managed table maps RAM as Normal
+WBWA and maps the BCM2712 peripheral aperture
+`[64GiB, 128GiB)` as Device-nGnRnE.
+
+To build the fixed-map fallback, run:
+
+```bash
+make -f Makefile.rpi5 UK_DEFCONFIG="$PWD/rpi5_config/rpi5_nopaging_defconfig"
+```
+
+To build the dynamic paging map, permission, and unmap test application, run:
+
+```bash
+make -f Makefile.rpi5 \
+  UK_APP="$PWD/testapps/dynamic-paging" \
+  UK_DEFCONFIG="$PWD/testapps/dynamic-paging/defconfig"
+```
+
+
 flash a USB stick with:
 
 ```bash

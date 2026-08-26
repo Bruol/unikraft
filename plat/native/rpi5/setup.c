@@ -7,6 +7,10 @@
 #include <uk/print.h>
 
 #include "pl011.h"
+
+#if CONFIG_LIBUKPAGING
+int rpi5_paging_remap_device_memory(void);
+#endif
 #include "rpi5_gpio.h"
 
 static int rpi5_bootinfo_reserve_null_page(struct ukplat_bootinfo *bi)
@@ -59,13 +63,26 @@ void rpi5_ukplat_entry(void)
 	if (rc)
 		UK_CRASH("rpi5: could not reserve the null page: %d\n", rc);
 
-	rc = rpi5_gpio_init();
-	if (rc)
-		uk_pr_err("rpi5: RP1 GPIO probe unavailable: %d\n", rc);
+	/*
+	 * Coalesce boot memory descriptors before paging consumes FREE regions
+	 * and marks them as unmapped. Later coalescing would reject those virtual
+	 * addresses as invalid memory-region descriptors.
+	 */
+	rpi5_pl011_puts("rpi5: calling uk_boot_early_init()\r\n");
+	uk_boot_early_init(bi);
 
 	rc = ukplat_mem_init();
 	if (rc)
 		UK_CRASH("rpi5: common memory initialization failed: %d\n", rc);
+#if CONFIG_LIBUKPAGING
+	rc = rpi5_paging_remap_device_memory();
+	if (rc)
+		UK_CRASH("rpi5: could not apply device memory attributes: %d\n", rc);
+#endif
+
+	rc = rpi5_gpio_init();
+	if (rc)
+		uk_pr_err("rpi5: RP1 GPIO probe unavailable: %d\n", rc);
 
 	rpi5_pl011_puts("rpi5: probing interrupt controller\r\n");
 	rc = uk_intctlr_probe();
@@ -83,9 +100,7 @@ void rpi5_ukplat_entry(void)
 		UK_CRASH("rpi5: boot CPU init failed: %d\n", rc);
 	}
 
-	rpi5_pl011_puts("rpi5: calling uk_boot_early_init()\r\n");
 	uk_pr_info("rpi5: DTB bootinfo populated, entering uk_boot_entry()\n");
-	uk_boot_early_init(bi);
 	rpi5_pl011_puts("rpi5: calling uk_boot_entry()\r\n");
 	uk_boot_entry();
 }

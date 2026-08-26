@@ -1,0 +1,3 @@
+$(eval $(call addlib,appdynamicpaging))
+
+APPDYNAMICPAGING_SRCS-y += $(APPDYNAMICPAGING_BASE)/main.c

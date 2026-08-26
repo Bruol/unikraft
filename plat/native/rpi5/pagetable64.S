@@ -12,7 +12,7 @@
  * minimum FDT parsing needed to discover RAM and builds the bootstrap map in
  * statically allocated .data pages.
  *
- * With a 40-bit VA and 4 KiB granule, translation starts at level 1.  The
+ * With a 48-bit VA and 4 KiB granule, translation starts at level 0.  The
  * symbol names follow Unikraft's historical page-table naming convention:
  *
  *   arm64_bpt_l3_pt0[0] -> arm64_bpt_l2_pt0
@@ -34,10 +34,11 @@
 #define PTE_TABLE               0x3
 #define PTE_AF                  (1 << 10)
 #define PTE_SH_INNER            (3 << 8)
-#define PTE_ATTR_DEVICE         (1 << 2)
+#define PTE_ATTR_NORMAL         (NORMAL_WB << 2)
+#define PTE_ATTR_DEVICE         (DEVICE_nGnRnE << 2)
 #define PTE_PXN                 (1 << 53)
 #define PTE_UXN                 (1 << 54)
-#define PTE_NORMAL              (1 | PTE_AF | PTE_SH_INNER)
+#define PTE_NORMAL              (1 | PTE_AF | PTE_SH_INNER | PTE_ATTR_NORMAL)
 #define PTE_DEVICE              (1 | PTE_AF | PTE_ATTR_DEVICE | PTE_PXN | PTE_UXN)
 #define MAX_RAM_RANGES          16
 
@@ -89,9 +90,9 @@ ENTRY(rpi5_start_mmu)
 	mov	x19, x30
 	mov	x20, x0
 
-	/* Clear tables and all exported boot metadata. */
+	/* Clear bootstrap/direct-map tables and all exported boot metadata. */
 	ldr	x0, =arm64_bpt_l3_pt0
-	mov	x1, #(8192 + 16 + MAX_RAM_RANGES * 16)
+	mov	x1, #(12288 + 16 + MAX_RAM_RANGES * 16)
 0:	str	xzr, [x0], #8
 	subs	x1, x1, #8
 	b.ne	0b
@@ -100,9 +101,9 @@ ENTRY(rpi5_start_mmu)
 	bl	rpi5_mmu_parse_fdt
 
 	/*
-	 * Connect root entry 0 to the single L2 table.  With a 40-bit VA and 4 KiB
-	 * granule, this L2 table has 512 entries and each entry maps a 1 GiB block,
-	 * so one root entry covers the complete 0..512 GiB bootstrap address space.
+	 * Connect root entry 0 to the single L2 table. With a 48-bit VA and 4 KiB
+	 * granule, this next-level table has 512 entries. Each entry maps a 1 GiB
+	 * block, so root entry 0 covers the 0..512 GiB bootstrap address space.
 	 * Every other root entry remains zero (invalid).
 	 *
 	 * rpi5_mmu_parse_fdt() has already populated the L2 indices selected by
@@ -122,6 +123,19 @@ ENTRY(rpi5_start_mmu)
 	ldr	x1, =arm64_bpt_l2_pt0
 	orr	x2, x1, #PTE_TABLE
 	str	x2, [x0]
+	/* Paging uses this upper-half identity alias while constructing tables. */
+	ldr	x1, =arm64_bpt_l2_directmap
+	orr	x2, x1, #PTE_TABLE
+	str	x2, [x0, #(511 * 8)]
+	mov	x3, xzr
+	ldr	x4, =PTE_NORMAL
+92:	lsl	x5, x3, #30
+	orr	x5, x5, x4
+	str	x5, [x1, x3, lsl #3]
+	add	x3, x3, #1
+	cmp	x3, #512
+	b.lo	92b
+	ldr	x1, =arm64_bpt_l2_pt0
 	mov	x3, #64
 	ldr	x4, =PTE_DEVICE
 91:	lsl	x5, x3, #30
@@ -133,9 +147,9 @@ ENTRY(rpi5_start_mmu)
 
 	/*
 	 * Publish descriptors before TTBR0, invalidate stale EL1 translations, then
-	 * program attributes and geometry before setting SCTLR_EL1.M/C/I.  MAIR
-	 * index 0 is Normal WBWA (0xff); index 1 is Device-nGnRnE (0x00).
-	 * TCR selects a 40-bit VA/PA, 4 KiB granule, inner-shareable WBWA walks, and
+	 * program attributes and geometry before setting SCTLR_EL1.M/C/I. MAIR uses
+	 * Unikraft's native ARM64 indexes (Device-nGnRnE 0, Normal WBWA 5).
+	 * TCR selects a 48-bit VA/PA, 4 KiB granule, inner-shareable WBWA walks, and
 	 * disables TTBR1 walks.  The SCTLR masks match Unikraft's KVM EL1 setup.
 	 */
 	dsb	sy
@@ -146,9 +160,9 @@ ENTRY(rpi5_start_mmu)
 	msr	mdscr_el1, xzr
 	tlbi	vmalle1
 	dsb	nsh
-	ldr	x0, =0x00000000000000ff	/* Attr0 Normal WBWA, Attr1 Device */
+	ldr	x0, =MAIR_INIT_ATTR
 	msr	mair_el1, x0
-	ldr	x0, =0x0000000280803518	/* 40-bit PA/VA, TTBR1 disabled, 4K WBWA IS */
+	ldr	x0, =TCR_INIT_FLAGS
 	msr	tcr_el1, x0
 	isb
 	/* SWD/GDB may replace the image without invalidating stale I-cache lines. */
@@ -513,6 +527,9 @@ arm64_bpt_l3_pt0:
 	.space 4096
 .global arm64_bpt_l2_pt0
 arm64_bpt_l2_pt0:
+	.space 4096
+.global arm64_bpt_l2_directmap
+arm64_bpt_l2_directmap:
 	.space 4096
 .global rpi5_mmu_range_count
 rpi5_mmu_range_count:
