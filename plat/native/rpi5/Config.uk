@@ -25,7 +25,7 @@ if PLAT_RPI5
 
 config RPI5_EARLY_GDB_SPINLOOP
 	bool "Stop in an early GDB spin loop"
-	default y
+	default n
 	help
 		Stop the boot CPU in a simple early spin loop before stack and
 		BSS setup. In GDB, clear `x2` while stopped at the loop `nop`,

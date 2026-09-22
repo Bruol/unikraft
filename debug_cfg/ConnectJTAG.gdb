@@ -3,7 +3,7 @@ target extended-remote :3333
 set $rpi5_dtb_addr = 0x10000000
 
 python
-import os
+from pathlib import Path
 
 RPI5_RELOAD_ENTRY = 0x200000
 RPI5_RELOAD_PARK = 0x200400
@@ -17,12 +17,29 @@ class Rpi5Reload(gdb.Command):
 
     def invoke(self, arg, from_tty):
         del arg, from_tty
-        dtb_path = "debug_cfg/bcm2712-rpi-5-b.dtb"
-        dtb_size = os.path.getsize(dtb_path)
-        if dtb_size > RPI5_DTB_MAX_SIZE:
+        try:
+            gdb.parse_and_eval("&rpi5_gdb_spin_flag")
+            gdb.parse_and_eval("&rpi5_reload_trampoline")
+        except gdb.error as exc:
             raise gdb.GdbError(
-                "DTB is %#x bytes; reload reservation is %#x bytes" %
+                "reload requires rpi5_config/rpi5_debug_defconfig") from exc
+
+        dtb_path = Path("debug_cfg/bcm2712-rpi-5-b.dtb")
+        try:
+            dtb_size = dtb_path.stat().st_size
+            with dtb_path.open("rb") as dtb_file:
+                header = dtb_file.read(8)
+        except OSError as exc:
+            raise gdb.GdbError(
+                "capture the target firmware DTB first; see "
+                "plat/native/rpi5/README.md") from exc
+        if not 40 <= dtb_size <= RPI5_DTB_MAX_SIZE:
+            raise gdb.GdbError(
+                "DTB is %#x bytes; expected 40..%#x bytes" %
                 (dtb_size, RPI5_DTB_MAX_SIZE))
+        if (header[:4] != b"\xd0\x0d\xfe\xed" or
+                int.from_bytes(header[4:8], "big") != dtb_size):
+            raise gdb.GdbError("invalid or truncated firmware DTB")
 
         resident = bytes(gdb.selected_inferior().read_memory(
             RPI5_RELOAD_ENTRY, 8))
