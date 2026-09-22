@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+
 #include "pl011.h"
 
 #include <uk/config.h>
@@ -76,10 +78,8 @@ void rpi5_pl011_dump_mem(__u64 addr, __u32 len)
 	__u32 i;
 
 	rpi5_pl011_puts("rpi5: dtb data:");
-	for (i = 0; i < len; i++)
-	{
-		if ((i & 0xf) == 0)
-		{
+	for (i = 0; i < len; i++) {
+		if ((i & 0xf) == 0) {
 			rpi5_pl011_puts("\r\n  ");
 			rpi5_pl011_put_hex64(addr + i);
 			rpi5_pl011_puts(": ");
@@ -93,7 +93,7 @@ void rpi5_pl011_dump_mem(__u64 addr, __u32 len)
 
 #if CONFIG_LIBUKCONSOLE
 static __ssz rpi5_pl011_console_out(struct uk_console *dev __unused,
-									const char *buf, __sz len)
+				    const char *buf, __sz len)
 {
 	__sz i;
 
@@ -104,7 +104,7 @@ static __ssz rpi5_pl011_console_out(struct uk_console *dev __unused,
 }
 
 static __ssz rpi5_pl011_console_in(struct uk_console *dev __unused,
-								   char *buf, __sz len)
+				   char *buf, __sz len)
 {
 	__sz i;
 
@@ -125,11 +125,9 @@ static struct uk_console rpi5_pl011_console;
 void rpi5_pl011_console_init(void)
 {
 	uk_console_init(&rpi5_pl011_console, "rpi5-pl011",
-					&rpi5_pl011_console_ops,
-					UK_CONSOLE_FLAG_STDOUT |
-						UK_CONSOLE_FLAG_STDIN |
-						UK_CONSOLE_FLAG_EMERG_STDOUT,
-					UK_CONSOLE_CLASS_UART);
+			&rpi5_pl011_console_ops,
+			UK_CONSOLE_FLAG_STDOUT | UK_CONSOLE_FLAG_STDIN |
+			UK_CONSOLE_FLAG_EMERG_STDOUT, UK_CONSOLE_CLASS_UART);
 	uk_console_register(&rpi5_pl011_console);
 }
 

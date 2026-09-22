@@ -17,7 +17,9 @@ struct ukplat_memregion_desc bpt_unmap_mrd = {
 	.pbase = 0,
 	.vbase = 0,
 	.pg_off = 0,
-	/* All valid DT RAM must remain below the fixed 64-GiB device aperture. */
+	/*
+	 * All valid DT RAM must remain below the fixed 64-GiB device aperture.
+	 */
 	.len = 0x1000000000UL,
 	.pg_count = 0x1000000UL,
 	.type = 0,

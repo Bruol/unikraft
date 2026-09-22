@@ -32,7 +32,6 @@ int main(void)
 	wait_msec(50);
 
 	for (int i = 0; i < 10; i++) {
-
 		rc = rpi5_gpio_set(GPIO_TEST_PIN, true);
 		if (rc)
 			return rc;

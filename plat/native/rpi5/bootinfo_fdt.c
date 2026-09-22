@@ -78,7 +78,8 @@ static void rpi5_memory_mrds(struct ukplat_bootinfo *bi, void *fdtp)
 	int image_found = 0;
 
 	while ((node = fdt_node_offset_by_prop_value(fdtp, node,
-			"device_type", "memory", sizeof("memory"))) >= 0) {
+						     "device_type", "memory",
+						     sizeof("memory"))) >= 0) {
 		if (!rpi5_node_enabled(fdtp, node))
 			continue;
 		parent = fdt_parent_offset(fdtp, node);
@@ -108,8 +109,9 @@ static void rpi5_memory_mrds(struct ukplat_bootinfo *bi, void *fdtp)
 			found = 1;
 			if (end > __BASE_ADDR && base < __END) {
 				if (unlikely(!RANGE_CONTAIN(base, size,
-							    __BASE_ADDR, image_len)))
-					ukplat_bootinfo_crash("Memory tuple partially overlaps image");
+							    __BASE_ADDR,
+							    image_len)))
+					ukplat_bootinfo_crash("Image overlap");
 				image_found = 1;
 				rpi5_free_mrd(bi, base, __BASE_ADDR - base);
 				rpi5_free_mrd(bi, __END, end - __END);

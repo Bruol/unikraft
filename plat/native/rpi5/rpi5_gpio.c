@@ -44,6 +44,7 @@ static struct rpi5_gpio_state rpi5_gpio;
 static inline __u32 rpi5_read(volatile __u8 *base, __u32 offset)
 {
 	__u32 value = *(volatile __u32 *)(base + offset);
+
 	__atomic_thread_fence(__ATOMIC_SEQ_CST);
 	return value;
 }
@@ -84,6 +85,7 @@ int rpi5_gpio_init(void)
 int rpi5_gpio_direction(unsigned int gpio, enum rpi5_gpio_direction direction)
 {
 	int rc = rpi5_gpio_check(gpio);
+
 	if (rc)
 		return rc;
 	if (direction > RPI5_GPIO_DIRECTION_OUTPUT)
@@ -111,6 +113,7 @@ int rpi5_gpio_direction(unsigned int gpio, enum rpi5_gpio_direction direction)
 int rpi5_gpio_get(unsigned int gpio, bool *value)
 {
 	int rc = rpi5_gpio_check(gpio);
+
 	if (rc)
 		return rc;
 	if (!value)
@@ -122,6 +125,7 @@ int rpi5_gpio_get(unsigned int gpio, bool *value)
 int rpi5_gpio_set(unsigned int gpio, bool value)
 {
 	int rc = rpi5_gpio_check(gpio);
+
 	if (rc)
 		return rc;
 	ukarch_spin_lock(&rpi5_gpio.lock);
@@ -136,6 +140,7 @@ int rpi5_gpio_set_pull(unsigned int gpio, enum rpi5_gpio_pull pull)
 {
 	__u32 value;
 	int rc = rpi5_gpio_check(gpio);
+
 	if (rc || pull > RPI5_GPIO_PULL_UP)
 		return rc ? rc : -EINVAL;
 	ukarch_spin_lock(&rpi5_gpio.lock);

@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+
 #ifndef __RPI5_PL011_H__
 #define __RPI5_PL011_H__
 

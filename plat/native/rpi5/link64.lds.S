@@ -75,9 +75,10 @@ SECTIONS {
 
 #if CONFIG_RPI5_EARLY_GDB_SPINLOOP
 	/*
-	 * Keep the warm-reload trampoline at a build-independent identity-mapped
-	 * address.  GDB executes the copy from the previous image before replacing
-	 * it, so this address must not move when ordinary kernel text changes.
+	 * Keep the warm-reload trampoline at a build-independent
+	 * identity-mapped address.  GDB executes the copy from the previous
+	 * image before replacing it, so this address must not move when
+	 * ordinary kernel text changes.
 	 */
 	. = 0x200000;
 	.rpi5_reload :
@@ -122,7 +123,8 @@ SECTIONS {
 	. = ALIGN(0x8);
 	.init_array : {
 		PROVIDE_HIDDEN (__init_array_start = .);
-		KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
+		KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*)
+			SORT_BY_INIT_PRIORITY(.ctors.*)))
 		KEEP (*(.init_array .ctors))
 		PROVIDE_HIDDEN (__init_array_end = .);
 	}

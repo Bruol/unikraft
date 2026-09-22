@@ -35,8 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-// TODO: consolidate this with common/generic_timer.c The code here is reused
-// 90% maybe there is a cleaner way then to copy it
+/* TODO: Share physical/virtual timer selection with common/arm. */
 
 #include <uk/arch/types.h>
 #include <uk/arch/util.h>

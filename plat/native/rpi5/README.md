@@ -1,79 +1,152 @@
 # Raspberry Pi 5
 
-This platform builds a fixed-address ARM64 Unikraft image for Raspberry Pi 5
-firmware boot. Applications remain external to the kernel tree; the default
-development workflow uses the official catalog's `native/helloworld-c` app.
+This platform boots a single-core AArch64 Unikraft application directly from
+Raspberry Pi 5 firmware. It supports a polling UART console, DT-based RAM
+allocation, GICv2 interrupts, the physical architectural timer, managed paging,
+and basic RP1 GPIO. See [Platform docs](platform-docs.md) for the design,
+hardware assumptions, evaluation results, and limitations.
 
-## Build
+## Build and boot
 
-Clone the catalog beside the Unikraft checkout, then use the platform wrapper:
+Run commands from the repository root. Install GNU Make, an AArch64 ELF GCC
+cross-toolchain, and Unikraft's normal build dependencies. On macOS, GNU Make
+is usually named `gmake`; on Linux, pass `UK_MAKE=make` if needed. Select your
+installed toolchain with `CROSS_COMPILE`, for example `aarch64-elf-`.
 
-```sh
-git clone https://github.com/unikraft/catalog.git ../catalog
-make -f Makefile.rpi5 configure
-make -f Makefile.rpi5 verify
-```
-
-Set explicit locations if needed:
-
-```sh
-make -f Makefile.rpi5 \
-  UK_BASE="$PWD" \
-  UK_APP=/path/to/catalog/native/helloworld-c \
-  verify
-```
-
-Outputs are deterministic under `build/rpi5`:
-
-- `kernel_2712.img`: Raspberry Pi firmware image
-- `kernel_2712.dbg`: debug ELF used by the GDB helper
-- `*_rpi5-arm64.sym`: ordered symbol map
-- `compile_commands.json`: compilation database
-
-The linker rejects an image larger than the reserved `[0x80000,0x300000)`
-warm-reload range.
-
-## Flash
-
-Pass a whole USB device, not a partition. This erases the selected device:
+The included C smoke test needs no separate application checkout:
 
 ```sh
-make -f Makefile.rpi5 flash-usb DEVICE=/dev/disk4
+make -f Makefile.rpi5 verify -j4 \
+  UK_APP="$PWD/testapps/hello-world" CROSS_COMPILE=aarch64-elf-
 ```
 
-## UART and GDB
+Without `UK_APP`, the wrapper uses `../catalog/native/helloworld-c` from a
+sibling checkout of the Unikraft catalog. Any compatible external application
+can be selected by its absolute path.
 
-Observe UART output at 115200 baud, for example:
+The build creates `build/rpi5/kernel_2712.img`, its debug ELF
+`build/rpi5/kernel_2712.dbg`, an application symbol map, and
+`build/rpi5/compile_commands.json`. The default configuration enables managed
+paging and boots without waiting for a debugger.
+
+To build the fixed bootstrap-map fallback:
+
+```sh
+make -f Makefile.rpi5 verify -j4 \
+  UK_APP="$PWD/testapps/hello-world" \
+  UK_DEFCONFIG="$PWD/rpi5_config/rpi5_nopaging_defconfig"
+```
+
+Use the flash helper to install the kernel and firmware on a USB disk. The
+command erases the whole selected disk and asks for confirmation. Replace
+`/dev/diskN` with the actual removable disk, or `/dev/sdX` on Linux:
+
+```sh
+make -f Makefile.rpi5 flash-usb \
+  UK_APP="$PWD/testapps/hello-world" DEVICE=/dev/diskN
+```
+
+The helper downloads firmware from `raspberrypi/firmware`. Set
+`FIRMWARE_VERSION` to a specific firmware commit for a reproducible image;
+the default is `master`. Its boot configuration is [config.txt](config.txt).
+The board's EEPROM boot order must permit USB boot.
+
+Connect the Pi's GPIO14 TX to the serial adapter's RX, GPIO15 RX to its TX,
+and a common ground. These are 3.3 V signals. Observe the console at
+115200 baud, substituting the host's serial-device name:
 
 ```sh
 tio /dev/cu.usbmodem102 -b 115200
 ```
 
-Start OpenOCD:
+A successful smoke test prints `Hello, World!` and returns zero.
+
+## Hardware evaluation applications
+
+Build each application by selecting its directory with `UK_APP`. These are
+hardware tests; a successful build alone does not execute them.
+
+| Application | Expected behavior |
+| --- | --- |
+| `testapps/hello-world` | Prints `Hello, World!` and returns zero. |
+| `testapps/hello-world-cpp` | Exercises C++ compilation and C console linkage. |
+| `testapps/eval-timer` | Completes 1,000 sleeps of 10 ms without early wake-ups or clock regression. |
+| `testapps/eval-mem` | Allocates and verifies at least 4,075 MiB on the tested 4 GiB board. |
+| `testapps/dynamic-paging` | Maps, protects, translates, and unmaps a page at 2 TiB. |
+| `testapps/rpi5-gpio` | Toggles GPIO23 ten times, holding each level for two seconds. |
+
+The default defconfig already enables paging and no-fault access for the
+paging test. No application-specific defconfig is required:
 
 ```sh
-sudo openocd --file debug_cfg/cmsis-dap.cfg \
-  --file debug_cfg/openocd_raspi5.cfg
+make -f Makefile.rpi5 verify -j4 UK_APP="$PWD/testapps/dynamic-paging"
 ```
 
-Build and connect GDB in another terminal:
+The memory test's capacity threshold is specific to the evaluated board and
+image size. A failure to reach it does not by itself prove memory corruption.
+For the GPIO test, connect an LED through a suitable series resistor between
+GPIO23 and ground.
+
+## UART, GDB, and warm reload
+
+Use the separate debug defconfig to enable the early spin loop and resident
+reload trampoline:
 
 ```sh
-make -f Makefile.rpi5 && gdb -q -x debug_cfg/ConnectJTAG.gdb
+make -f Makefile.rpi5 verify -j4 \
+  UK_APP="$PWD/testapps/hello-world" \
+  UK_DEFCONFIG="$PWD/rpi5_config/rpi5_debug_defconfig"
 ```
 
-The `rpi5_reload` command uses the resident trampoline at `0x200000`, reaches
-the cache/MMU-off park at `0x200400`, and reloads the debug ELF and DTB without
-a power cycle. It rejects oversized DTBs before changing target state.
+Flash this configuration once using the same `UK_APP` and `UK_DEFCONFIG`
+arguments. The debug image waits before MMU initialization. Connect a
+CMSIS-DAP probe to the Pi debug port and start OpenOCD in another terminal:
 
-## Hardware behavior
+```sh
+openocd --file debug_cfg/cmsis-dap.cfg --file debug_cfg/openocd_raspi5.cfg
+```
 
-The firmware DTB supplies memory ranges, GIC-400 data, and ARM architectural
-timer data. The platform discovers enabled RAM tuples, preserves reservations
-and holes, initializes GICv2, and uses the non-secure physical timer registers
-and timer interrupt tuple 1.
+The reload helper needs a firmware-patched DTB captured from the target board
+at `debug_cfg/bcm2712-rpi-5-b.dtb`. This is a local artifact, not a portable
+board description bundled with the source. Capture it after a cold boot of
+the debug image, while stopped in the early spin loop, using GDB with Python:
 
-Historical hardware validation covered split-bank 4 GiB memory, 1,000
-sequential 10 ms sleeps, and repeated warm GDB reloads. Repeat those checks
-with external test applications after changing memory, interrupt, timer, MMU,
-or reload code.
+```sh
+gdb -q build/rpi5/kernel_2712.dbg
+```
+
+```gdb
+target extended-remote :3333
+monitor halt
+# Verify that the boot CPU is in the early spin loop before using x20.
+x/4i $pc
+python
+import pathlib
+import gdb
+addr = int(gdb.parse_and_eval("$x20"))
+inferior = gdb.selected_inferior()
+header = bytes(inferior.read_memory(addr, 8))
+if header[:4] != b"\xd0\x0d\xfe\xed":
+    raise gdb.GdbError("x20 does not point to an FDT")
+size = int.from_bytes(header[4:8], "big")
+if not 40 <= size <= 0x14000:
+    raise gdb.GdbError("DTB does not fit the reload reservation")
+pathlib.Path("debug_cfg/bcm2712-rpi-5-b.dtb").write_bytes(
+    bytes(inferior.read_memory(addr, size)))
+end
+detach
+quit
+```
+
+After capture, and for subsequent sessions, start with:
+
+```sh
+gdb -q -x debug_cfg/ConnectJTAG.gdb
+```
+
+Run `continue` after loading. Rebuild with the debug defconfig for each warm
+reload. The helper runs the old image's resident trampoline before loading
+the replacement ELF and DTB. It rejects a warm target without the trampoline.
+A normal, non-debug image requires a cold boot before this workflow can be
+used again. The debug linker reserves the trampoline at `0x200000`, the park
+at `0x200400`, and limits the image to the range ending at `0x300000`.

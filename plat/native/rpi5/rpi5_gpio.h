@@ -18,7 +18,7 @@ enum rpi5_gpio_direction {
 
 int rpi5_gpio_init(void);
 int rpi5_gpio_direction(unsigned int gpio,
-			 enum rpi5_gpio_direction direction);
+			enum rpi5_gpio_direction direction);
 int rpi5_gpio_get(unsigned int gpio, bool *value);
 int rpi5_gpio_set(unsigned int gpio, bool value);
 int rpi5_gpio_set_pull(unsigned int gpio, enum rpi5_gpio_pull pull);

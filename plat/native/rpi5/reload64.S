@@ -20,14 +20,16 @@
 .global rpi5_reload_trampoline
 .type rpi5_reload_trampoline, %function
 rpi5_reload_trampoline:
-	/* No exception or debug interrupt may run through a stale vector table. */
+	/*
+	 * No exception or debug interrupt may run through a stale vector table.
+	 */
 	msr	daifset, #0xf
 	dsb	sy
 	mrs	x13, sctlr_el1
 	tbz	x13, #2, 6f
 
 	/*
-	 * Clean and invalidate every data/unified cache level by set/way.  CLIDR
+	 * Clean and invalidate every data/unified cache level by set/way. CLIDR
 	 * has a three-bit cache type per level; types 2, 3, and 4 have data.
 	 * CCSIDR fields are NumSets-1, Associativity-1, and log2(line)-4.
 	 */
@@ -71,12 +73,17 @@ rpi5_reload_trampoline:
 
 	/* A cold firmware entry has no dirty data cache to walk. */
 6:
-	/* Remove every stale instruction and translation before changing SCTLR. */
+	/*
+	 * Remove every stale instruction and translation before changing SCTLR.
+	 */
 	ic	iallu
 	tlbi	vmalle1
 	dsb	sy
 	isb
-	/* Let OpenOCD's hardware breakpoint stop the otherwise non-returning park. */
+	/*
+	 * Let OpenOCD's hardware breakpoint stop the otherwise non-returning
+	 * park.
+	 */
 	mov	x14, #(1 << 15)
 	msr	mdscr_el1, x14
 	isb
@@ -91,8 +98,9 @@ rpi5_reload_trampoline:
 
 	/*
 	 * Debug AP writes are not coherent with every cache level on BCM2712.
-	 * With C and M now off, invalidate the fixed image reservation and DTB by
-	 * physical address (VA=PA). Dirty state was already cleaned by set/way.
+	 * With C and M now off, invalidate the fixed image reservation and DTB
+	 * by physical address (VA=PA). Dirty state was already cleaned by
+	 * set/way.
 	 */
 	ldr	x2, =0x80000
 	ldr	x3, =0x300000
@@ -108,7 +116,9 @@ rpi5_reload_trampoline:
 	b.lo	10b
 	dsb	sy
 
-	/* Leave no translation or instruction-cache state for the next image. */
+	/*
+	 * Leave no translation or instruction-cache state for the next image.
+	 */
 	tlbi	vmalle1
 	ic	iallu
 	dsb	sy

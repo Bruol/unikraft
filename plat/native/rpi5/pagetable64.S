@@ -18,8 +18,8 @@
  *   arm64_bpt_l3_pt0[0] -> arm64_bpt_l2_pt0
  *   arm64_bpt_l2_pt0[i] -> 1 GiB identity-mapped block i
  *
- * DT-reported RAM becomes Normal WBWA memory.  L2 indices 64..127, the
- * BCM2712 CPU physical aperture at 64..128 GiB, are always Device-nGnRnE and
+ * DT-reported RAM becomes Normal WBWA memory.  L2 indices 64..127, the BCM2712
+ * CPU physical aperture at 64..128 GiB, are always Device-nGnRnE and
  * execute-never.  Everything else remains invalid.
  */
 
@@ -39,7 +39,8 @@
 #define PTE_PXN                 (1 << 53)
 #define PTE_UXN                 (1 << 54)
 #define PTE_NORMAL              (1 | PTE_AF | PTE_SH_INNER | PTE_ATTR_NORMAL)
-#define PTE_DEVICE              (1 | PTE_AF | PTE_ATTR_DEVICE | PTE_PXN | PTE_UXN)
+#define PTE_DEVICE \
+	(1 | PTE_AF | PTE_ATTR_DEVICE | PTE_PXN | PTE_UXN)
 #define MAX_RAM_RANGES          16
 
 /* FDT scalar fields are stored in big-endian byte order. */
@@ -50,9 +51,9 @@
 
 /*
  * Compare an FDT string byte-by-byte.  Before translation is enabled the
- * architecture may treat accesses as Device memory, where an unaligned word
- * or doubleword load faults regardless of SCTLR_EL1.A.  FDT strings are packed
- * and have no natural-alignment guarantee, so ldrb is intentional here.
+ * architecture may treat accesses as Device memory, where an unaligned word or
+ * doubleword load faults regardless of SCTLR_EL1.A.  FDT strings are packed and
+ * have no natural-alignment guarantee, so ldrb is intentional here.
  */
 .macro match_bytes out, ptr, literal, count
 	ldr	x16, =\literal
@@ -97,19 +98,21 @@ ENTRY(rpi5_start_mmu)
 	subs	x1, x1, #8
 	b.ne	0b
 
-	/* Populate Normal RAM blocks and exported ranges from the firmware FDT. */
+	/*
+	 * Populate Normal RAM blocks and exported ranges from the firmware FDT.
+	 */
 	bl	rpi5_mmu_parse_fdt
 
 	/*
-	 * Connect root entry 0 to the single L2 table. With a 48-bit VA and 4 KiB
-	 * granule, this next-level table has 512 entries. Each entry maps a 1 GiB
-	 * block, so root entry 0 covers the 0..512 GiB bootstrap address space.
-	 * Every other root entry remains zero (invalid).
+	 * Connect root entry 0 to the single L2 table. With a 48-bit VA and 4
+	 * KiB granule, this next-level table has 512 entries. Each entry maps a
+	 * 1 GiB block, so root entry 0 covers the 0..512 GiB bootstrap address
+	 * space. Every other root entry remains zero (invalid).
 	 *
 	 * rpi5_mmu_parse_fdt() has already populated the L2 indices selected by
 	 * DT-reported RAM with Normal WBWA identity mappings.  Fill L2[64..127]
-	 * with Device-nGnRnE, execute-never identity mappings for the fixed BCM2712
-	 * CPU peripheral aperture:
+	 * with Device-nGnRnE, execute-never identity mappings for the fixed
+	 * BCM2712 CPU peripheral aperture:
 	 *
 	 *     physical base = L2 index << 30
 	 *     L2[64]  =  64 GiB = 0x1000000000
@@ -123,7 +126,9 @@ ENTRY(rpi5_start_mmu)
 	ldr	x1, =arm64_bpt_l2_pt0
 	orr	x2, x1, #PTE_TABLE
 	str	x2, [x0]
-	/* Paging uses this upper-half identity alias while constructing tables. */
+	/*
+	 * Paging uses this upper-half identity alias while constructing tables.
+	 */
 	ldr	x1, =arm64_bpt_l2_directmap
 	orr	x2, x1, #PTE_TABLE
 	str	x2, [x0, #(511 * 8)]
@@ -146,11 +151,12 @@ ENTRY(rpi5_start_mmu)
 	b.lo	91b
 
 	/*
-	 * Publish descriptors before TTBR0, invalidate stale EL1 translations, then
-	 * program attributes and geometry before setting SCTLR_EL1.M/C/I. MAIR uses
-	 * Unikraft's native ARM64 indexes (Device-nGnRnE 0, Normal WBWA 5).
-	 * TCR selects a 48-bit VA/PA, 4 KiB granule, inner-shareable WBWA walks, and
-	 * disables TTBR1 walks.  The SCTLR masks match Unikraft's KVM EL1 setup.
+	 * Publish descriptors before TTBR0, invalidate stale EL1 translations,
+	 * then program attributes and geometry before setting SCTLR_EL1.M/C/I.
+	 * MAIR uses Unikraft's native ARM64 indexes (Device-nGnRnE 0, Normal
+	 * WBWA 5). TCR selects a 48-bit VA/PA, 4 KiB granule, inner-shareable
+	 * WBWA walks, and disables TTBR1 walks.  The SCTLR masks match
+	 * Unikraft's KVM EL1 setup.
 	 */
 	dsb	sy
 	ldr	x0, =arm64_bpt_l3_pt0
@@ -165,7 +171,10 @@ ENTRY(rpi5_start_mmu)
 	ldr	x0, =TCR_INIT_FLAGS
 	msr	tcr_el1, x0
 	isb
-	/* SWD/GDB may replace the image without invalidating stale I-cache lines. */
+	/*
+	 * SWD/GDB may replace the image without invalidating stale I-cache
+	 * lines.
+	 */
 	ic	iallu
 	dsb	sy
 	isb
@@ -184,17 +193,18 @@ END(rpi5_start_mmu)
  * Parse the FDT at x20 and populate the RAM entries in arm64_bpt_l2_pt0.
  *
  * This deliberately implements only the pre-MMU subset needed here: root
- * address/size cell widths plus direct-child device_type, status, and reg.
- * It returns only after at least one non-empty RAM tuple has been recorded.
- * All parser failures branch to the shared non-returning error path.
+ * address/size cell widths plus direct-child device_type, status, and reg. It
+ * returns only after at least one non-empty RAM tuple has been recorded. All
+ * parser failures branch to the shared non-returning error path.
  */
 ENTRY(rpi5_mmu_parse_fdt)
 	mov	x21, x30
 
 	/*
-	 * Validate the header before following any offset.  x26 is the end of the
-	 * complete blob, x22..x27 bounds the structure block, and x23..x24 bounds
-	 * the strings block.  Adds uses the carry flag to reject pointer overflow.
+	 * Validate the header before following any offset.  x26 is the end of
+	 * the complete blob, x22..x27 bounds the structure block, and x23..x24
+	 * bounds the strings block.  Adds uses the carry flag to reject pointer
+	 * overflow.
 	 */
 	load_be32 1, x20
 	ldr	w2, =FDT_MAGIC
@@ -232,13 +242,14 @@ ENTRY(rpi5_mmu_parse_fdt)
 	b.hi	rpi5_mmu_bad_header
 
 	/*
-	 * The FDT specification defaults child addresses to two cells and sizes to
-	 * one cell.  Root properties override these values, but this bootstrap only
-	 * accepts widths that fit in a 64-bit physical address.
+	 * The FDT specification defaults child addresses to two cells and sizes
+	 * to one cell.  Root properties override these values, but this
+	 * bootstrap only accepts widths that fit in a 64-bit physical address.
 	 *
-	 * Depth after BEGIN_NODE is 1 for the root and 2 for its direct children.
-	 * x10..x13 accumulate the properties of one possible memory node and are
-	 * committed only when that node closes, so property order is irrelevant.
+	 * Depth after BEGIN_NODE is 1 for the root and 2 for its direct
+	 * children. x10..x13 accumulate the properties of one possible memory
+	 * node and are committed only when that node closes, so property order
+	 * is irrelevant.
 	 */
 	mov	w28, #2			/* #address-cells */
 	mov	w29, #1			/* #size-cells */
@@ -266,7 +277,11 @@ ENTRY(rpi5_mmu_parse_fdt)
 	b.eq	9f
 	b	rpi5_mmu_bad_struct
 
-2:	/* Node names are NUL-terminated; the next token starts on a 4-byte boundary. */
+2:
+	/*
+	 * Node names are NUL-terminated; the next token starts on a 4-byte
+	 * boundary.
+	 */
 	add	w25, w25, #1
 	cmp	w25, #2
 	b.ne	20f
@@ -282,7 +297,10 @@ ENTRY(rpi5_mmu_parse_fdt)
 	and	x22, x22, #-4
 	b	1b
 
-3:	/* Commit an enabled direct child only if it is a complete memory node. */
+3:
+	/*
+	 * Commit an enabled direct child only if it is a complete memory node.
+	 */
 	cmp	w25, #2
 	b.ne	30f
 	cbz	x10, 30f
@@ -314,8 +332,8 @@ ENTRY(rpi5_mmu_parse_fdt)
 	b.hi	rpi5_mmu_bad_string
 	/*
 	 * At depth 1 only the root cell widths matter.  At depth 2 collect
-	 * device_type, status, and reg.  Unknown properties and deeper nodes are
-	 * skipped, keeping this parser deliberately smaller than libfdt.
+	 * device_type, status, and reg.  Unknown properties and deeper nodes
+	 * are skipped, keeping this parser deliberately smaller than libfdt.
 	 */
 	cmp	w25, #1
 	b.ne	40f
@@ -445,7 +463,10 @@ rpi5_mmu_add_reg:
 	mov	x30, x15
 	ret
 
-/* Export the mapped Normal block runs as sorted, coalesced [base, length] pairs. */
+/*
+ * Export the mapped Normal block runs as sorted, coalesced [base, length]
+ * pairs.
+ */
 rpi5_mmu_build_ranges:
 	mov	x0, x30
 	ldr	x1, =arm64_bpt_l2_pt0
@@ -490,7 +511,7 @@ rpi5_mmu_build_ranges:
  *   1 bad magic          2 invalid header/bounds   3 bad structure token
  *   4 bad string offset  5 unsupported cell width 6 malformed reg
  *   7 no RAM             8 RAM/Device overlap     9 metadata capacity
- *  11 MMU/data cache already on
+ * 11 MMU/data cache already on
  */
 rpi5_mmu_bad_magic:       mov x0, #1; b rpi5_mmu_fail
 rpi5_mmu_bad_header:      mov x0, #2; b rpi5_mmu_fail
@@ -510,7 +531,10 @@ rpi5_mmu_fail:
 
 .global rpi5_mmu_bad_entry_state
 rpi5_mmu_bad_entry_state:
-	/* Avoid memory accesses: with a live unknown MMU even .data may be unmapped. */
+	/*
+	 * Avoid memory accesses: with a live unknown MMU even .data may be
+	 * unmapped.
+	 */
 	mov	x0, #11
 1:	wfe
 	b	1b

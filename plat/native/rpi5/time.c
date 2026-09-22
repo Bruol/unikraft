@@ -67,10 +67,10 @@ uint32_t generic_timer_get_frequency(int fdt_timer)
 	const uint64_t *fdt_freq;
 
 	/*
-	* On a few platforms the frequency is not configured correctly
-	* by the firmware. A property in the DT (clock-frequency) has
-	* been introduced to workaround those firmware.
-	*/
+	 * On a few platforms the frequency is not configured correctly
+	 * by the firmware. A property in the DT (clock-frequency) has
+	 * been introduced to workaround those firmware.
+	 */
 	fdt_freq = fdt_getprop(dtb, fdt_timer, "clock-frequency", &len);
 	if (!fdt_freq || (len <= 0)) {
 		uk_pr_info("No clock-frequency found, reading from register directly.\n");
