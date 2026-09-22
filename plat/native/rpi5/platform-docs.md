@@ -1,7 +1,6 @@
 # Platform docs
 
-This document condenses Lorin Urbantat's Raspberry Pi 5 platform report into
-an implementation reference. It describes the current source and separates
+This document describes the current source and separates
 the report's hardware results from functionality that remains untested.
 Build, flashing, and debugging commands are in the [platform README](README.md).
 
